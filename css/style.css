@@ -1,0 +1,11 @@
+@charset "UTF-8";
+
+/*共通部分*/
+html {
+    font-size: 100%;
+}
+
+/*デスクトップ版*/
+@media(min-width: 800px) {
+
+}
