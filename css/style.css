@@ -5,6 +5,30 @@ html {
     font-size: 100%;
 }
 
+.flex{
+    display: flex;
+}
+
+.right{
+    text-align: right;
+}
+
+li{
+    list-style-type: none;
+}
+
+
+
+    /*ヘッダー*/
+    .header-flex{
+        display: flex;
+        justify-content: space-between; 
+        background-color: gray;
+        height: 8vh;
+        align-items: center;
+    }
+
+    
 
 /*デスクトップ版*/
 @media(min-width: 800px) {
