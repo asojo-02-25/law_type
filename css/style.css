@@ -5,8 +5,17 @@ html {
     font-size: 100%;
 }
 
+.font-small{
+    font-size: 0.75rem;
+    color: lightgray;
+}
+
 .right{
     text-align: right;
+}
+
+.center{
+    text-align: center;
 }
 
 li{
@@ -40,6 +49,23 @@ li{
         display: flex;
         gap: 8px
     }   
+
+    /*タイピング画面*/
+
+
+    /*アーティクル*/
+
+    /*フッター*/
+    footer{
+        background-color: gray;
+        padding: 8px 0 8px 0;
+    }
+
+    .footer-flex{
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+    }
 
 /*デスクトップ版*/
 @media(min-width: 800px) {
