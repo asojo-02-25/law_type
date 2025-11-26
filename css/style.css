@@ -5,10 +5,6 @@ html {
     font-size: 100%;
 }
 
-.flex{
-    display: flex;
-}
-
 .right{
     text-align: right;
 }
@@ -19,16 +15,31 @@ li{
 
 
 
-    /*ヘッダー*/
+    /*ヘッダー&ナビゲーションメニュー*/
     .header-flex{
         display: flex;
         justify-content: space-between; 
         background-color: gray;
         height: 8vh;
         align-items: center;
+        font-size: 1.25rem;
+        padding: 0 16px 0 16px;
     }
 
-    
+    .header-icon{
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    .icon{
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    .nav-flex{
+        display: flex;
+        gap: 8px
+    }   
 
 /*デスクトップ版*/
 @media(min-width: 800px) {
