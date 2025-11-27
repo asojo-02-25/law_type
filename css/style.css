@@ -1,17 +1,35 @@
 @charset "UTF-8";
 
 /*共通部分*/
+:root{
+    --gray: gray;
+    --blue: #005070;
+    --yellow: #e5cf6e;
+    --light-gray: #dddddd;
+    --font-basic: #000000;
+}
+
 html {
     font-size: 100%;
+    background-color: var(--light-gray)
+}
+
+p{
+    font-size: 1rem;
+    line-height: 2;
 }
 
 .font-small{
     font-size: 0.75rem;
-    color: lightgray;
+    color: var(--font-basic);
 }
 
 .right{
     text-align: right;
+}
+
+.left{
+    text-align: left;
 }
 
 .center{
@@ -22,50 +40,118 @@ li{
     list-style-type: none;
 }
 
+/* ヘッダー&ナビゲーションメニュー */
+.header-flex{
+    display: flex;
+    justify-content: space-between; 
+    background-color: var(--gray);
+    height: 8vh;
+    align-items: center;
+    font-size: 1.25rem;
+    padding: 0 16px 0 16px;
+}
+
+.header-icon{
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.icon{
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.nav-flex{
+    display: flex;
+    gap: 8px
+}   
+
+/*メインコンテンツ*/
+.main-flex{
+    display:flex;
+    gap: 3vw;
+    margin: 1rem 0 1rem 0
+}
+
+.main-contents{
+    width: 50vw;
+    max-width: 50vw;
+    flex-shrink: 0;
+    margin-left: 15vw;
+}
+
+/*タイピング画面*/
+.typing-contents{
+    background-color: var(--gray);
+    border-radius: 8px;
+    padding: 0.25rem 1rem 0.25rem 1rem;
+    margin: 0.5rem 1rem 0.5rem 1rem;
+    height: 80vh;
+}
+
+form{
+    text-align: center;
+}
+
+form h3{
+    padding: 0.5rem 0 0.5rem 0;
+}
+
+.form-flex{
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    background-color: var(--light-gray);
+    border-radius: 4px;
+    padding: 1rem 0 1rem 0;
+    margin: 0 0 1rem 0;
+}
+
+#start-button{
+    background-color: var(--yellow);
+    border-radius: 4px;
+    padding: 0.25rem 0.25rem 0.25rem 0.25rem;
+}
 
 
-    /*ヘッダー&ナビゲーションメニュー*/
-    .header-flex{
-        display: flex;
-        justify-content: space-between; 
-        background-color: gray;
-        height: 8vh;
-        align-items: center;
-        font-size: 1.25rem;
-        padding: 0 16px 0 16px;
-    }
+/*注意書き*/
+.article-contents{
+    background-color: var(--gray);
+    border-radius: 8px;
+    padding: 0.25rem 1rem 0.25rem 1rem;
+    margin: 0.5rem 1rem 0.5rem 1rem;
+}
 
-    .header-icon{
-        width: 1.25rem;
-        height: 1.25rem;
-    }
+/*サイドコンテンツ*/
+.aside-all-contents{
+    width: 20vw;
+    min-width: 0;
+    flex-shrink: 1;
+}
 
-    .icon{
-        width: 1.25rem;
-        height: 1.25rem;
-    }
+.aside-contents{
+    background-color: var(--gray);
+    border-radius: 8px;
+    padding: 0.25rem 1rem 0.25rem 1rem;
+    margin: 0.5rem 1rem 0.5rem 1rem;
+}
 
-    .nav-flex{
-        display: flex;
-        gap: 8px
-    }   
+aside h3{
+    gap: 0 0 1rem 0;
+}
 
-    /*タイピング画面*/
+/*フッター*/
+footer{
+    background-color: gray;
+    padding: 8px 0 8px 0;
+    height: 16vh;
+}
 
-
-    /*アーティクル*/
-
-    /*フッター*/
-    footer{
-        background-color: gray;
-        padding: 8px 0 8px 0;
-    }
-
-    .footer-flex{
-        display: flex;
-        justify-content: center;
-        gap: 6px;
-    }
+.footer-flex{
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
 
 /*デスクトップ版*/
 @media(min-width: 800px) {
