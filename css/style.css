@@ -116,15 +116,23 @@ li{
         cursor: pointer;
     }
 
-    #start-button :disabled{
-        cursor: default;
-    }
-
     #start-button :hover{
-        background-color: whitesmoke;
+        background-color: gray;
     }
     
     /*ゲーム中の画面切り替え*/
+    #start-screen{
+        display: block;
+    }
+
+    #game-screen{
+        display: none;
+    }
+
+    #results-screen{
+        display: none;
+    }
+     
 
 /*注意書き*/
 .article-contents{
