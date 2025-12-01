@@ -80,7 +80,7 @@ li{
 }
 
 /*タイピング画面*/
-    /*構成*/
+    /*設定画面*/
     .typing-contents{
         background-color: var(--gray);
         border-radius: 8px;
@@ -112,7 +112,7 @@ li{
         font-size: 1rem;
         background-color: var(--yellow);
         border-radius: 4px;
-        padding: 0.25rem 0.25rem 0.25rem 0.25rem;
+        padding: 0.5rem 2rem 0.5rem 2rem;
         cursor: pointer;
     }
 
@@ -120,6 +120,20 @@ li{
         font-weight: bold;
     }
     
+    /*ゲーム画面*/
+    .game-area{
+        background-color: var(--light-gray);
+        border-radius: 4px;
+        margin-top: 1rem;
+    }
+
+    .game-area{
+        background-color: var(--light-gray);
+        border-radius: 4px;
+        height: 20vh;
+    }
+
+
     /*ゲーム中の画面切り替え*/
     #start-screen{
         display: block;
