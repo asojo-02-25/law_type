@@ -122,17 +122,56 @@ li{
     
     /*ゲーム画面*/
     .game-area{
-        background-color: var(--light-gray);
+        background-color: black;
+        color: white;
         border-radius: 4px;
         margin-top: 1rem;
-    }
-
-    .game-area{
-        background-color: var(--light-gray);
-        border-radius: 4px;
         height: 20vh;
+        width: 40vw;
     }
 
+    /*キーボード*/
+    #keyboard-container{
+        padding: .5rem 1.5rem .5rem 1.5rem;
+        border: solid;
+        border-color: white;
+        border-width: 1px
+    }
+
+    .keyboard-row{
+        display: flex;
+        justify-content: space-between;
+        background-color: black;
+    }
+
+    .key{
+        color: white;
+        border-style: solid;
+        border-width: 1px;
+        border-color: white;
+        border-radius: 4px;
+        text-align: center;    
+    }
+    
+    .key.normal{
+        width: 20px;
+        height: 20px;
+    }
+
+    .key.middle{
+        width: 30px;
+        height: 20px;
+    }
+
+    .key.wide{
+        width: 40px;
+        height:20px;
+    }
+
+    .key.shift{
+        width:60px;
+        height: 20px;
+    }
 
     /*ゲーム中の画面切り替え*/
     #start-screen{
