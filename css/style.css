@@ -135,6 +135,8 @@ li{
     #keyboard-container{
         display: grid;
         grid-template-columns:repeat(45, 1fr);
+        gap: 2px;
+        padding: 8px 16px 8px 16px;
     }
 
     .key{
@@ -173,8 +175,6 @@ li{
         grid-column: span 4;
     }
     
-    .key.none
-
     /*ゲーム中の画面切り替え*/
     #start-screen{
         display: none;
