@@ -151,30 +151,32 @@ li{
     }
     
     .key.normal{
-        height: 25px;
         grid-column: span 3;
+        height: 25px;
     }
 
     .key.middle{
-        height: 25px;
         grid-column: span 4;
+        height: 25px;
     }
 
     .key.wide{
-        height:25px;
         grid-column: span 5;
+        height: 25px;
     }
 
     .key.shift{
-        height: 25px;
         grid-column: span 6;
+        height: 25px;
     }
 
     .key.enter{
-        height: 25px;
-        grid-column: span 4;
+        grid-column: 42 / 46;
+        grid-row: 2 / 4;
+        align-self: stretch;
     }
     
+
     /*ゲーム中の画面切り替え*/
     #start-screen{
         display: none;
