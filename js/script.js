@@ -9,7 +9,7 @@ const btn = document.querySelector('#start-button')
 const startScreen = document.querySelector('#start-screen')
 const gameScreen = document.querySelector('#game-screen')
 const resultsScreen = document.querySelector('#results-screen')
-const displayDelay = document.querySelector('#display-delay')
+const delayScreen = document.querySelector('#delay-screen')
 
 const startGame = () => {
     //startScreenの非表示
@@ -21,12 +21,13 @@ const startGame = () => {
         opacity: [0, 1],
     };
     const options = {
-        duration: 1000,
+        duration: 300,
+        delay: 800,
         easing: 'ease',
         fill: 'forwards',
     }
 
-    displayDelay.animate(keyframes, options);
+    delayScreen.animate(keyframes, options);
 }
 
 btn.addEventListener('click', startGame);
