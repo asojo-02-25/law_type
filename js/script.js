@@ -9,7 +9,9 @@ const btn = document.querySelector('#start-button')
 const startScreen = document.querySelector('#start-screen')
 const gameScreen = document.querySelector('#game-screen')
 const resultsScreen = document.querySelector('#results-screen')
-const delayScreen = document.querySelector('#delay-screen')
+const delayScreens = document.querySelectorAll('.delay-screen')
+
+console.log(delayScreens)
 
 const startGame = () => {
     //startScreenの非表示
@@ -19,6 +21,7 @@ const startGame = () => {
     //問題欄、回答欄の遅延出現
     const keyframes = {
         opacity: [0, 1],
+        transform: ['scale(0), scale(1)'],
     };
     const options = {
         duration: 300,
@@ -27,7 +30,9 @@ const startGame = () => {
         fill: 'forwards',
     }
 
-    delayScreen.animate(keyframes, options);
+    for(const screen of delayScreens){
+        screen.animate(keyframes, options);
+    }
 }
 
 btn.addEventListener('click', startGame);
