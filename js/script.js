@@ -98,6 +98,58 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+//問題を格納する配列
+const typingQuestions = [
+    {
+        text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである',
+        field: '憲法',
+        source: 'マクリーン事件',
+    },
+    {
+        text: '国際慣習法上、国家は外国人を受け入れる義務を負うものではなく、特別の条約がない限り、外国人を自国内に受け入れるかどうか、また、これを受け入れる場合にいかなる条件を付するかを、当該国家が自由に決定することができるものとされている',
+        field: '憲法',
+        source: 'マクリーン事件',
+    },
+]
+
+let questionQueue = []          //実際に出題される問題のリスト
+let currentQuestionIndex = 0     //今何問目か
+let currentCharIndex = 0        // 何文字目をタイプしているか
+
+//html要素を取得
+const textElement = document.querySelector('#question-text')
+const inputElement = document.querySelector('#user-input')
+
+//画面に問題を表示する関数
+const updateQuestionDisplay = () => {
+
+    //今の問題データを取得
+    const currentQuestion = questionQueue[currentQuestonIndex]
+
+    //html要素をもとに画面にセット
+    textElement.textcontent = currentQuestion.text;
+
+    //ユーザー入力欄を空に
+    inputElement.textcontent = '';
+};
+
+//次の問題に進む準備
+const nextQuestion = () => {
+        currentQuestionIndex++;     // 次の問題へ
+        currentCharIndex = 0;       // 文字数はリセット
+
+        // まだ問題があれば表示を更新 なければ終了
+        if(currentquestionIndex < questionQueue.length){
+            updateQuestionDisplay();
+        }else{
+            inputElement.textcontent = 'finish!'
+            // 結果画面への遷移などを後で記述
+        }
+        
+};
+
+
+
 
 
 
