@@ -19,14 +19,14 @@ const startGame = () => {
     //gameScreenの表示
     gameScreen.style.display = 'block';
     //問題欄、回答欄の遅延出現
-    const keyframes = {
-        opacity: [0, 1],
-        transform: ['scale(0), scale(1)'],
-    };
+    const keyframes = [
+        {opacity: 0, transform: 'scale(0)'},
+        {transform: 'scale(0.2)', offset: 0.2},
+        {opacity: 1}
+    ];
     const options = {
-        duration: 300,
-        delay: 800,
-        easing: 'ease',
+        duration: 250,
+        delay: 500,
         fill: 'forwards',
     }
 
