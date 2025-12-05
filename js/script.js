@@ -62,3 +62,5 @@ form.addEventListener('submit', (event) => {
     const currentSettings = getGameSettings()
     startGame(currentSettings);
 });
+
+
