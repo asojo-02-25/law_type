@@ -1,19 +1,40 @@
-//設定画面→ゲーム画面の切り替え/ゲーム開始の処理
+//設定画面→ゲーム画面の切り替え&ゲーム開始の処理
 
 const form = document.querySelector('#form')
-form.addEventListener('submit', (event) =>
-    event.preventDefault()
-);
-
-const btn = document.querySelector('#start-button')
 const startScreen = document.querySelector('#start-screen')
 const gameScreen = document.querySelector('#game-screen')
 const resultsScreen = document.querySelector('#results-screen')
 const delayScreens = document.querySelectorAll('.delay-screen')
 
-console.log(delayScreens)
+//設定の取得
+const getGameSettings = () => {
+    //問題形式
+    const format = document.querySelector('input[name="format"]:checked').value;
+    //問題数
+    const itemcounts = parseInt(document.querySelector('input[name="itemcounts"]:checked').value);
+    //各種設定
+    const options = []
+    document.querySelectorAll('input[name="setting"]:checked').forEach((checkbox) => {
+        options.push(checkbox.value);
+    });
 
-const startGame = () => {
+    return{
+        mode: format,
+        questionCounts: itemcounts,
+        settings: options,
+    }
+};
+
+const startGame = (config) => {
+    console.log("開始設定", config)
+
+    if(config.settings.includes('roman-letters-represent')){
+        console.log("ローマ字を表示します");
+    }
+    if(config.settings.includes('keyboard-represent')){
+        console.log("キーボードを表示します");
+    }
+    //ディスプレイ関連
     //startScreenの非表示
     startScreen.style.display = 'none';
     //gameScreenの表示
@@ -33,7 +54,11 @@ const startGame = () => {
     for(const screen of delayScreens){
         screen.animate(keyframes, options);
     }
-}
+};
 
-btn.addEventListener('click', startGame);
-
+form.addEventListener('submit', (event) => {
+    console.log("フォームが提出されました");
+    event.preventDefault();
+    const currentSettings = getGameSettings()
+    startGame(currentSettings);
+});
