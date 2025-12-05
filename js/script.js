@@ -5,6 +5,7 @@ const startScreen = document.querySelector('#start-screen')
 const gameScreen = document.querySelector('#game-screen')
 const resultsScreen = document.querySelector('#results-screen')
 const delayScreens = document.querySelectorAll('.delay-screen')
+const btn = document.querySelector('#start-button')
 
 //設定の取得
 const getGameSettings = () => {
@@ -61,6 +62,14 @@ form.addEventListener('submit', (event) => {
     event.preventDefault();
     const currentSettings = getGameSettings()
     startGame(currentSettings);
+});
+
+//スペースキー押下時も同様の処理を行う
+document.addEventListener('keydown', (event) => {
+    if(event.code === 'Space' && startScreen.style.display !== 'none'){
+        event.preventDefault();
+        btn.click();
+    }
 });
 
 
