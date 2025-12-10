@@ -1,5 +1,4 @@
 //設定画面→ゲーム画面の切り替え&ゲーム開始の処理
-
 const form = document.querySelector('#form')
 const startScreen = document.querySelector('#start-screen')
 const gameScreen = document.querySelector('#game-screen')
@@ -65,8 +64,9 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-//ゲーム開始の処理
+// ゲーム開始の処理
 const startGame = (config) => {
+    // 設定の取得・反映
     console.log("開始設定", config)
 
     if(config.settings.includes('roman-letters-represent')){
@@ -76,14 +76,38 @@ const startGame = (config) => {
         console.log("キーボードを表示します");
     }
 
+    // 問題の出題
+    // 1. 問題をシャッフル
+    const shuffleArray = (array) => {
+        // もとの配列が壊れないようにコピーを作成(スプレッド構文)
+        const cloneArray = [...array]
+        // 後ろから順にランダムな場所に入れ替え--fisher-Yates shuffle
+        for(let i = cloneArray.length - 1; i >= 0; i--){
+            const rand = Math.floor(Math.random() * (i + 1))
+            [cloneArray[i], cloneArray[rand]] = [cloneArray[rand], cloneArray[i]]
+        };
+        // 次の処理にcloneArrayを渡す
+        return cloneArray;
+    }
+    const shuffledQuestions = shuffleArray(typingQuestions);
 
+    // 2. 問題をスライス
+    const count = Math.min(shuffledQuestions.length, config.questionCounts)
+    questionQueue = shuffledQuestions.slice(0, count);
 
-    //ディスプレイ関連
-    //startScreenの非表示
+    // 3. カウンターをリセット
+    currentQuestionIndex = 0;
+    currentCharIndex = 0;
+
+    // 4. 最初の問題を表示
+    updateQuestionDisplay();
+
+    // ディスプレイ関連
+    // startScreenの非表示
     startScreen.style.display = 'none';
-    //gameScreenの表示
+    // gameScreenの表示
     gameScreen.style.display = 'block';
-    //問題欄、回答欄の遅延出現
+    // 問題欄、回答欄の遅延出現
     const keyframes = [
         {opacity: 0, transform: 'scale(0)'},
         {opacity: 1, transform: 'scale(1)'},
@@ -99,29 +123,30 @@ const startGame = (config) => {
     }
 };
 
-// startGame関数の準備関数
-let questionQueue = []          //実際に出題される問題のリスト
-let currentQuestionIndex = 0     //今何問目か
+// startGame関数の準備
+// 変数の定義
+let questionQueue = []          // 実際に出題される問題のリスト
+let currentQuestionIndex = 0     // 今何問目か
 let currentCharIndex = 0        // 何文字目をタイプしているか
 
-//html要素を取得
+// html要素を取得
 const textElement = document.querySelector('#question-text')
 const inputElement = document.querySelector('#user-input')
 
-//画面に問題を表示する関数
+// 画面に問題を表示する関数
 const updateQuestionDisplay = () => {
 
-    //今の問題データを取得
+    // 今の問題データを取得
     const currentQuestion = questionQueue[currentQuestonIndex]
 
-    //html要素をもとに画面にセット
+    // html要素をもとに画面にセット
     textElement.textcontent = currentQuestion.text;
 
-    //ユーザー入力欄を空に
+    // ユーザー入力欄を空に
     inputElement.textcontent = '';
 };
 
-//次の問題に進む準備
+// 次の問題に進む準備
 const nextQuestion = () => {
     currentQuestionIndex++;     // 次の問題へ
     currentCharIndex = 0;       // 文字数はリセット
@@ -133,20 +158,13 @@ const nextQuestion = () => {
         inputElement.textcontent = 'finish!'
         // 結果画面への遷移などを後で記述
     }
-        
 };
 
-// 問題をシャッフルする関数
-const shuffleArray = (array) => {
-    //もとの配列が壊れないようにコピーを作成(スプレッド構文)
-    const cloneArray = [...array]
-    //後ろから順にランダムな場所に入れ替え
 
 
 
-}
 
-//問題を格納する配列 - これ以下は何も記述したくない
+// 問題を格納する配列 --- これ以下は何も記述したくない
 const typingQuestions = [
     {
         text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである',
