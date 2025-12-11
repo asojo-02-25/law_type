@@ -30,7 +30,12 @@ const getGameSettings = () => {
 // --- 1.3.1. 変数の定義 ---
 let questionQueue = [];         // 実際に出題される問題のリスト
 let currentQuestionIndex = 0;   // 今何問目か
-let currentCharIndex = 0;       // 何文字目をタイプしているか
+let chunkedText = [];           // 日本語を読点で区切ったリスト
+let chunkedRomaji = [];         // ローマ字をカンマで区切ったリスト
+let curretChunkIndex = 0;       // 今何個目の文節を打っているか
+let currentTargetRomaji = '';   // 今打つべきローマ字の文節
+let inputBuffer = '';           // ユーザーが打っている正誤未確定の文節
+
 
 // ---1.3.2. html要素を取得 ---
 const textElement = document.querySelector('#question-text');
@@ -40,15 +45,24 @@ const inputElement = document.querySelector('#user-input');
 const typingQuestions = [
     {
         text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである',
+        romaji: 'kenpounijuunijouikkouha,nipponkokunainiokerukyojuu・itennojiyuuwohoshousurumunewokiteisurunitodomari,gaikokujingawagakunininyuukokusurukotonituitehananrakiteisiteinaimonodearu.',
         field: '憲法',
         source: 'マクリーン事件',
     },
     {
         text: '国際慣習法上、国家は外国人を受け入れる義務を負うものではなく、特別の条約がない限り、外国人を自国内に受け入れるかどうか、また、これを受け入れる場合にいかなる条件を付するかを、当該国家が自由に決定することができるものとされている。',
+        romaji: 'kokusaikanshuuhoujou,kokkahagaikokujinwoukeirerugimuwooumonodehanaku,tokubetunojouyakuganaikagiri,gaikokujinwojikokunainiukeirerukadouka,mata,korewoukeirerubaainiikanarujoukenwohusurukawo,tougaikokkagajiyuuniketteisurukotogadekirumonotosareteiru.',
         field: '憲法',
         source: 'マクリーン事件',
     },
 ];
+
+// --- 1.3.4 データのセットアップ ---
+const setupQuestionData = () => {
+    const currentQuestion = questionQueue[currentQuestionIndex];
+    // 日本語を句読点で分割
+    chunkedText = currentQuestion.text.split(/([、。])/)
+}
 
 // --- 1.3.4. 画面に問題を表示する関数 ---
 const updateQuestionDisplay = () => {
@@ -66,7 +80,6 @@ const updateQuestionDisplay = () => {
 // --- 1.3.5. 次の問題に進む準備 ---
 const nextQuestion = () => {
     currentQuestionIndex++;     // 次の問題へ
-    currentCharIndex = 0;       // 文字数はリセット
 
     // まだ問題があれば表示を更新 なければ終了
     if(currentQuestionIndex < questionQueue.length){
@@ -110,7 +123,6 @@ const startGame = (config) => {
 
     // カウンターをリセット
     currentQuestionIndex = 0;
-    currentCharIndex = 0;
 
     // 最初の問題を表示
     updateQuestionDisplay();
@@ -178,7 +190,7 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-
+// --- 3. ゲーム中の処理 ---
 
 
 
