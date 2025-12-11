@@ -1,19 +1,20 @@
-//設定画面→ゲーム画面の切り替え&ゲーム開始の処理
-const form = document.querySelector('#form')
-const startScreen = document.querySelector('#start-screen')
-const gameScreen = document.querySelector('#game-screen')
-const resultsScreen = document.querySelector('#results-screen')
-const delayScreens = document.querySelectorAll('.delay-screen')
-const btn = document.querySelector('#start-button')
+// --- 1. 設定画面 → ゲーム画面の切り替え&ゲーム開始の処理 ---
+// --- 1.1. html要素の取得 ---
+const form = document.querySelector('#form');
+const startScreen = document.querySelector('#start-screen');
+const gameScreen = document.querySelector('#game-screen');
+const resultsScreen = document.querySelector('#results-screen');
+const delayScreens = document.querySelectorAll('.delay-screen');
+const btn = document.querySelector('#start-button');
 
-//設定の取得
+// --- 1.2. 設定の取得 ---
 const getGameSettings = () => {
     //問題形式
     const format = document.querySelector('input[name="format"]:checked').value;
     //問題数
     const itemcounts = parseInt(document.querySelector('input[name="itemcounts"]:checked').value);
     //各種設定
-    const options = []
+    const options = [];
     document.querySelectorAll('input[name="setting"]:checked').forEach((checkbox) => {
         options.push(checkbox.value);
     });
@@ -22,52 +23,64 @@ const getGameSettings = () => {
         mode: format,
         questionCounts: itemcounts,
         settings: options,
+    };
+};
+
+// --- 1.3. startGame関数の定義 ---
+// --- 1.3.1. 変数の定義 ---
+let questionQueue = [];         // 実際に出題される問題のリスト
+let currentQuestionIndex = 0;   // 今何問目か
+let currentCharIndex = 0;       // 何文字目をタイプしているか
+
+// ---1.3.2. html要素を取得 ---
+const textElement = document.querySelector('#question-text');
+const inputElement = document.querySelector('#user-input');
+
+// --- 1.3.3. 問題を格納する配列 ---
+const typingQuestions = [
+    {
+        text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである',
+        field: '憲法',
+        source: 'マクリーン事件',
+    },
+    {
+        text: '国際慣習法上、国家は外国人を受け入れる義務を負うものではなく、特別の条約がない限り、外国人を自国内に受け入れるかどうか、また、これを受け入れる場合にいかなる条件を付するかを、当該国家が自由に決定することができるものとされている。',
+        field: '憲法',
+        source: 'マクリーン事件',
+    },
+];
+
+// --- 1.3.4. 画面に問題を表示する関数 ---
+const updateQuestionDisplay = () => {
+
+    // 今の問題データを取得
+    const currentQuestion = questionQueue[currentQuestionIndex];
+
+    // html要素をもとに画面にセット
+    textElement.textContent = currentQuestion.text;
+
+    // ユーザー入力欄を空に
+    inputElement.textContent = '';
+};
+
+// --- 1.3.5. 次の問題に進む準備 ---
+const nextQuestion = () => {
+    currentQuestionIndex++;     // 次の問題へ
+    currentCharIndex = 0;       // 文字数はリセット
+
+    // まだ問題があれば表示を更新 なければ終了
+    if(currentQuestionIndex < questionQueue.length){
+        updateQuestionDisplay();
+    }else{
+        inputElement.textContent = 'finish!'
+        // 結果画面への遷移などを後で記述
     }
 };
 
-//フォーム提出時→ゲーム開始のイベントリスナー
-form.addEventListener('submit', (event) => {
-    console.log("フォームが提出されました");
-    event.preventDefault();
-    const currentSettings = getGameSettings()
-    startGame(currentSettings);
-});
-
-const resetGame = () => {
-    //画面の切り替え
-    gameScreen.style.display = 'none';
-    startScreen.style.display = 'block';
-    //アニメーションのリセット
-    for(const screen of delayScreens){
-        //スタイルの不透明度とサイズを復元
-        screen.style.opacity = '0';
-        screen.style.transform = 'scale(0)';
-        //アニメーションの解除
-        screen.getAnimations().forEach((animation) => {
-            animation.cancel();
-        });
-    }
-    // 将来的にゲームのタイマー等をリセットする処理を記述する必要有
-}
-
-//Space,Escキー押下時の処理
-document.addEventListener('keydown', (event) => {
-    //スペースキー押下時もフォーム提出と同様の処理を行う
-    if(event.code === 'Space' && startScreen.style.display !== 'none'){
-        event.preventDefault();
-        btn.click();
-    }
-    //Escキー押下時にゲーム中断
-    if(event.code === 'Escape' && gameScreen !== 'none'){
-        event.preventDefault();
-        resetGame();
-    }
-});
-
-// ゲーム開始の処理
+// --- 1.3.6. startGame関数 ---
 const startGame = (config) => {
     // 設定の取得・反映
-    console.log("開始設定", config)
+    console.log("開始設定", config);
 
     if(config.settings.includes('roman-letters-represent')){
         console.log("ローマ字を表示します");
@@ -77,29 +90,29 @@ const startGame = (config) => {
     }
 
     // 問題の出題
-    // 1. 問題をシャッフル
+    // 問題をシャッフル
     const shuffleArray = (array) => {
         // もとの配列が壊れないようにコピーを作成(スプレッド構文)
-        const cloneArray = [...array]
+        const cloneArray = [...array];
         // 後ろから順にランダムな場所に入れ替え--fisher-Yates shuffle
-        for(let i = cloneArray.length - 1; i >= 0; i--){
-            const rand = Math.floor(Math.random() * (i + 1))
-            [cloneArray[i], cloneArray[rand]] = [cloneArray[rand], cloneArray[i]]
+        for(let i = cloneArray.length - 1; i > 0; i--){
+            const rand = Math.floor(Math.random() * (i + 1));
+            [cloneArray[i], cloneArray[rand]] = [cloneArray[rand], cloneArray[i]];
         };
         // 次の処理にcloneArrayを渡す
         return cloneArray;
     }
     const shuffledQuestions = shuffleArray(typingQuestions);
 
-    // 2. 問題をスライス
-    const count = Math.min(shuffledQuestions.length, config.questionCounts)
+    // 問題をスライス
+    const count = Math.min(shuffledQuestions.length, config.questionCounts);
     questionQueue = shuffledQuestions.slice(0, count);
 
-    // 3. カウンターをリセット
+    // カウンターをリセット
     currentQuestionIndex = 0;
     currentCharIndex = 0;
 
-    // 4. 最初の問題を表示
+    // 最初の問題を表示
     updateQuestionDisplay();
 
     // ディスプレイ関連
@@ -116,67 +129,56 @@ const startGame = (config) => {
         duration: 250,
         delay: 500,
         fill: 'forwards',
-    }
+    };
 
     for(const screen of delayScreens){
         screen.animate(keyframes, options);
     }
 };
 
-// startGame関数の準備
-// 変数の定義
-let questionQueue = []          // 実際に出題される問題のリスト
-let currentQuestionIndex = 0     // 今何問目か
-let currentCharIndex = 0        // 何文字目をタイプしているか
+// --- 1.4. フォーム提出 → ゲーム開始の実行処理 ---
+form.addEventListener('submit', (event) => {
+    console.log("フォームが提出されました");
+    event.preventDefault();
+    const currentSettings = getGameSettings();
+    startGame(currentSettings);
+});
 
-// html要素を取得
-const textElement = document.querySelector('#question-text')
-const inputElement = document.querySelector('#user-input')
-
-// 画面に問題を表示する関数
-const updateQuestionDisplay = () => {
-
-    // 今の問題データを取得
-    const currentQuestion = questionQueue[currentQuestonIndex]
-
-    // html要素をもとに画面にセット
-    textElement.textcontent = currentQuestion.text;
-
-    // ユーザー入力欄を空に
-    inputElement.textcontent = '';
-};
-
-// 次の問題に進む準備
-const nextQuestion = () => {
-    currentQuestionIndex++;     // 次の問題へ
-    currentCharIndex = 0;       // 文字数はリセット
-
-    // まだ問題があれば表示を更新 なければ終了
-    if(currentquestionIndex < questionQueue.length){
-        updateQuestionDisplay();
-    }else{
-        inputElement.textcontent = 'finish!'
-        // 結果画面への遷移などを後で記述
+// --- 1.5. Spaceキー押下時にもフォーム提出と同様の処理を行う ---
+document.addEventListener('keydown', (event) => {
+    if(event.code === 'Space' && startScreen.style.display !== 'none'){
+        event.preventDefault();
+        btn.click();
     }
+});
+
+// --- 2. ゲーム中にEscキーによりゲームを中断する場合の処理 ---
+// --- 2.1. resetGame関数の用意 ---
+const resetGame = () => {
+    //画面の切り替え
+    gameScreen.style.display = 'none';
+    startScreen.style.display = 'block';
+    //アニメーションのリセット
+    for(const screen of delayScreens){
+        //スタイルの不透明度とサイズを復元
+        screen.style.opacity = '0';
+        screen.style.transform = 'scale(0)';
+        //アニメーションの解除
+        screen.getAnimations().forEach((animation) => {
+            animation.cancel();
+        });
+    }
+    // 将来的にゲームのタイマー等をリセットする処理を記述する必要有
 };
+// --- 2.2. Escキー押下時にゲーム中断 ---
+document.addEventListener('keydown', (event) => {
+    if(event.code === 'Escape' && gameScreen !== 'none'){
+        event.preventDefault();
+        resetGame();
+    }
+});
 
 
-
-
-
-// 問題を格納する配列 --- これ以下は何も記述したくない
-const typingQuestions = [
-    {
-        text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである',
-        field: '憲法',
-        source: 'マクリーン事件',
-    },
-    {
-        text: '国際慣習法上、国家は外国人を受け入れる義務を負うものではなく、特別の条約がない限り、外国人を自国内に受け入れるかどうか、また、これを受け入れる場合にいかなる条件を付するかを、当該国家が自由に決定することができるものとされている。',
-        field: '憲法',
-        source: 'マクリーン事件',
-    },
-]
 
 
 
