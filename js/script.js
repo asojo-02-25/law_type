@@ -32,49 +32,80 @@ let questionQueue = [];         // 実際に出題される問題のリスト
 let currentQuestionIndex = 0;   // 今何問目か
 let chunkedText = [];           // 日本語を読点で区切ったリスト
 let chunkedRomaji = [];         // ローマ字をカンマで区切ったリスト
-let curretChunkIndex = 0;       // 今何個目の文節を打っているか
+let currentChunkIndex = 0;       // 今何個目の文節を打っているか
 let currentTargetRomaji = '';   // 今打つべきローマ字の文節
 let inputBuffer = '';           // ユーザーが打っている正誤未確定の文節
 
-
-// ---1.3.2. html要素を取得 ---
-const textElement = document.querySelector('#question-text');
-const inputElement = document.querySelector('#user-input');
-
-// --- 1.3.3. 問題を格納する配列 ---
+// --- 1.3.2. 問題を格納する配列 ---
 const typingQuestions = [
     {
         text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである',
-        romaji: 'kenpounijuunijouikkouha,nipponkokunainiokerukyojuu・itennojiyuuwohoshousurumunewokiteisurunitodomari,gaikokujingawagakunininyuukokusurukotonituitehananrakiteisiteinaimonodearu.',
+        romaji: 'kenpounijuunijouikkouha,nipponnkokunainiokerukyojuu/itennnojiyuuwohoshousurumunewokiteisurunitodomari,gaikokujinngawagakunininyuukokusurukotonituitehanannrakiteisiteinaimonodearu.',
         field: '憲法',
         source: 'マクリーン事件',
     },
     {
         text: '国際慣習法上、国家は外国人を受け入れる義務を負うものではなく、特別の条約がない限り、外国人を自国内に受け入れるかどうか、また、これを受け入れる場合にいかなる条件を付するかを、当該国家が自由に決定することができるものとされている。',
-        romaji: 'kokusaikanshuuhoujou,kokkahagaikokujinwoukeirerugimuwooumonodehanaku,tokubetunojouyakuganaikagiri,gaikokujinwojikokunainiukeirerukadouka,mata,korewoukeirerubaainiikanarujoukenwohusurukawo,tougaikokkagajiyuuniketteisurukotogadekirumonotosareteiru.',
+        romaji: 'kokusaikannshuuhoujou,kokkahagaikokujinnwoukeirerugimuwooumonodehanaku,tokubetunojouyakuganaikagiri,gaikokujinnwojikokunainiukeirerukadouka,mata,korewoukeirerubaainiikanarujoukenwohusurukawo,tougaikokkagajiyuuniketteisurukotogadekirumonotosareteiru.',
         field: '憲法',
         source: 'マクリーン事件',
     },
 ];
 
-// --- 1.3.4 データのセットアップ ---
+// --- 1.3.3 データのセットアップ ---
 const setupQuestionData = () => {
     const currentQuestion = questionQueue[currentQuestionIndex];
     // 日本語を句読点で分割
-    chunkedText = currentQuestion.text.split(/([、。])/)
-}
+    chunkedText = currentQuestion.text.split(/([、。])/).reduce((acc, curr, i, arr) => {
+        if(curr.match(/[、。]/) && acc.length > 0){
+            acc[acc.length - 1] += curr;
+        }else if(curr !== ''){
+            acc.push(curr);
+        }
+        return acc;
+    },[]);
+    
+    // ローマ字をカンマで分割
+    chunkedRomaji = currentQuestion.romaji.split(/[,.]/).reduce((acc, curr) => {
+        if(curr.match(/[,.]/) && acc.length > 0){
+            acc[acc.length - 1] += curr;
+        }else if(curr.trim() !== ''){
+            acc.push(curr);
+        }
+        return acc;    
+    },[]);
 
-// --- 1.3.4. 画面に問題を表示する関数 ---
+    //インデックスのリセット
+    currentChunkIndex = 0;
+    inputBuffer = "";
+    currentTargetRomaji = chunkedRomaji[0];
+};
+
+// --- 1.3.4. 画面表示の更新 ---
 const updateQuestionDisplay = () => {
 
-    // 今の問題データを取得
-    const currentQuestion = questionQueue[currentQuestionIndex];
+    // html要素を取得
+    const textElement = document.querySelector('#question-text');
+    const romajiElement = document.querySelector('#question-romaji')
+    const inputElement = document.querySelector('#user-input');
 
-    // html要素をもとに画面にセット
-    textElement.textContent = currentQuestion.text;
+    //文節ごとにspanタグでくくって表示を変化させる
+    let htmlContent = '';
 
-    // ユーザー入力欄を空に
-    inputElement.textContent = '';
+    chunkedText.forEach((chunk, index) => {
+        let className = '';
+        if(index < currentChunkIndex){
+            className = 'completed';
+        }else if(index = currentChunkIndex){
+            className = 'current';
+        }
+        
+        htmlContent += `<span class="${className}">${chunk}</span>`;
+    });
+
+    textElement.innerHTML = htmlContent;
+
+    inputElement.textContent = inputBuffer;
 };
 
 // --- 1.3.5. 次の問題に進む準備 ---
@@ -83,6 +114,7 @@ const nextQuestion = () => {
 
     // まだ問題があれば表示を更新 なければ終了
     if(currentQuestionIndex < questionQueue.length){
+        setupQuestionData();
         updateQuestionDisplay();
     }else{
         inputElement.textContent = 'finish!'
@@ -125,6 +157,7 @@ const startGame = (config) => {
     currentQuestionIndex = 0;
 
     // 最初の問題を表示
+    setupQuestionData();
     updateQuestionDisplay();
 
     // ディスプレイ関連
