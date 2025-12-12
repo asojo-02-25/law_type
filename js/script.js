@@ -46,7 +46,7 @@ const typingQuestions = [
     },
     {
         text: '国際慣習法上、国家は外国人を受け入れる義務を負うものではなく、特別の条約がない限り、外国人を自国内に受け入れるかどうか、また、これを受け入れる場合にいかなる条件を付するかを、当該国家が自由に決定することができるものとされている。',
-        romaji: 'kokusaikannshuuhoujou,kokkahagaikokujinnwoukeirerugimuwooumonodehanaku,tokubetunojouyakuganaikagiri,gaikokujinnwojikokunainiukeirerukadouka,mata,korewoukeirerubaainiikanarujoukenwohusurukawo,tougaikokkagajiyuuniketteisurukotogadekirumonotosareteiru.',
+        romaji: 'kokusaikannshuuhoujou,kokkahagaikokujinnwoukeirerugimuwooumonodehanaku,tokubetunojouyakuganaikagiri,gaikokujinnwojikokunainiukeirerukadouka,mata,korewoukeirerubaainiikanarujoukennwohusurukawo,tougaikokkagajiyuuniketteisurukotogadekirumonotosareteiru.',
         field: '憲法',
         source: 'マクリーン事件',
     },
@@ -66,7 +66,7 @@ const setupQuestionData = () => {
     },[]);
     
     // ローマ字をカンマで分割
-    chunkedRomaji = currentQuestion.romaji.split(/[,.]/).reduce((acc, curr) => {
+    chunkedRomaji = currentQuestion.romaji.split(/([,.])/).reduce((acc, curr) => {
         if(curr.match(/([,.])/) && acc.length > 0){
             acc[acc.length - 1] += curr;
         }else if(curr.trim() !== ''){
@@ -117,7 +117,8 @@ const nextQuestion = () => {
         setupQuestionData();
         updateQuestionDisplay();
     }else{
-        document.querySelector('#user-input').textContent = 'finish!'
+        document.querySelector('#user-input').textContent = 'finish!';
+        console.log('finish!');
         // 結果画面への遷移などを後で記述
     }
 };
@@ -242,6 +243,7 @@ document.addEventListener('keydown', (event) => {
             //すべて打ち終わったか
             if(currentChunkIndex === chunkedRomaji.length){
                 nextQuestion();
+                return;
             }else{
                 currentTargetRomaji = chunkedRomaji[currentChunkIndex];
             }
