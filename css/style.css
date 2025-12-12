@@ -136,6 +136,16 @@ li{
         /* transform-origin: top left; */
     }
 
+    .completed{
+        color: var(--light-gray);
+        opacity: 0.5;
+    }
+
+    .current{
+        color: var(--yellow);
+        font-weight: bold;
+    }
+
     /*キーボード*/
     #keyboard-container{
         display: grid;
