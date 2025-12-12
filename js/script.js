@@ -39,7 +39,7 @@ let inputBuffer = '';           // ユーザーが打っている正誤未確定
 // --- 1.3.2. 問題を格納する配列 ---
 const typingQuestions = [
     {
-        text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである',
+        text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである。',
         romaji: 'kenpounijuunijouikkouha,nipponnkokunainiokerukyojuu/itennnojiyuuwohoshousurumunewokiteisurunitodomari,gaikokujinngawagakunininyuukokusurukotonituitehanannrakiteisiteinaimonodearu.',
         field: '憲法',
         source: 'マクリーン事件',
@@ -197,8 +197,9 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-// --- 2. ゲーム中にEscキーによりゲームを中断する場合の処理 ---
-// --- 2.1. resetGame関数の用意 ---
+
+// --- 2. ゲーム中の処理 ---
+// --- 2.1. Escキーによりゲームを中断(resetGame関数)
 const resetGame = () => {
     //画面の切り替え
     gameScreen.style.display = 'none';
@@ -215,11 +216,43 @@ const resetGame = () => {
     }
     // 将来的にゲームのタイマー等をリセットする処理を記述する必要有
 };
-// --- 2.2. Escキー押下時にゲーム中断 ---
+// --- ゲーム進行中のキーダウンイベント ---
 document.addEventListener('keydown', (event) => {
+    // Escキー押下時にゲーム中断
     if(event.code === 'Escape' && gameScreen !== 'none'){
         event.preventDefault();
         resetGame();
+    }
+    //キー入力の判定処理
+    // ゲーム中以外は無視
+    if(gameScreen.style.display === 'none')return;
+    // アルファベットor数字のみを受け付ける簡易フィルタ
+    if(event.key.length === 1){
+        inputBuffer += event.key;
+        if(currentTargetRomaji.startsWith(inputBuffer)){
+            // 正解なら何もしない
+        }else{
+            // キーボードに装飾 or ローマ字ガイドに装飾 or 背景色に微細なアニメーション
+        }
+    }
+    // 分節の入力完了チェック
+    if(inputBuffer === currentTargetRomaji){
+        currentChunkIndex++;
+        inputBuffer = '';
+        //すべて打ち終わったか
+        if(currentChunkIndex === chunkedRomaji.length){
+            nextQuestion();
+        }else{
+            currentTargetRomaji = chunkedRomaji[currentChunkIndex];
+        }
+    }
+    // 画面更新
+    updateQuestionDisplay();
+
+    //バックスペースの処理
+    if(event.key === 'Backspace'){
+        inputBuffer = inputBuffer.slice(0, -1);
+        updateQuestionDisplay();
     }
 });
 
