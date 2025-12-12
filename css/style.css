@@ -137,7 +137,7 @@ li{
     }
 
     .completed{
-        color: var(--gray);
+        color: var(--light-gray);
         opacity: 0.5;
     }
 

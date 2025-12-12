@@ -40,7 +40,7 @@ let inputBuffer = '';           // ユーザーが打っている正誤未確定
 const typingQuestions = [
     {
         text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである。',
-        romaji: 'kenpounijuunijouikkouha,nipponnkokunainiokerukyojuu/itennnojiyuuwohoshousurumunewokiteisurunitodomari,gaikokujinngawagakunininyuukokusurukotonituitehanannrakiteisiteinaimonodearu.',
+        romaji: 'kennpounijuunijouikkouha,nipponnkokunainiokerukyojuu/itennnojiyuuwohoshousurumunewokiteisurunitodomari,gaikokujinngawagakunininyuukokusurukotonituitehanannrakiteisiteinaimonodearu.',
         field: '憲法',
         source: 'マクリーン事件',
     },
@@ -57,7 +57,7 @@ const setupQuestionData = () => {
     const currentQuestion = questionQueue[currentQuestionIndex];
     // 日本語を句読点で分割
     chunkedText = currentQuestion.text.split(/([、。])/).reduce((acc, curr, i, arr) => {
-        if(curr.match(/[、。]/) && acc.length > 0){
+        if(curr.match(/([、。])/) && acc.length > 0){
             acc[acc.length - 1] += curr;
         }else if(curr !== ''){
             acc.push(curr);
@@ -67,7 +67,7 @@ const setupQuestionData = () => {
     
     // ローマ字をカンマで分割
     chunkedRomaji = currentQuestion.romaji.split(/[,.]/).reduce((acc, curr) => {
-        if(curr.match(/[,.]/) && acc.length > 0){
+        if(curr.match(/([,.])/) && acc.length > 0){
             acc[acc.length - 1] += curr;
         }else if(curr.trim() !== ''){
             acc.push(curr);
@@ -96,7 +96,7 @@ const updateQuestionDisplay = () => {
         let className = '';
         if(index < currentChunkIndex){
             className = 'completed';
-        }else if(index = currentChunkIndex){
+        }else if(index === currentChunkIndex){
             className = 'current';
         }
         
@@ -117,7 +117,7 @@ const nextQuestion = () => {
         setupQuestionData();
         updateQuestionDisplay();
     }else{
-        inputElement.textContent = 'finish!'
+        document.querySelector('#user-input').textContent = 'finish!'
         // 結果画面への遷移などを後で記述
     }
 };
@@ -234,21 +234,22 @@ document.addEventListener('keydown', (event) => {
         }else{
             // キーボードに装飾 or ローマ字ガイドに装飾 or 背景色に微細なアニメーション
         }
-    }
-    // 分節の入力完了チェック
-    if(inputBuffer === currentTargetRomaji){
-        currentChunkIndex++;
-        inputBuffer = '';
-        //すべて打ち終わったか
-        if(currentChunkIndex === chunkedRomaji.length){
-            nextQuestion();
-        }else{
-            currentTargetRomaji = chunkedRomaji[currentChunkIndex];
-        }
-    }
-    // 画面更新
-    updateQuestionDisplay();
 
+        // 分節の入力完了チェック
+        if(inputBuffer === currentTargetRomaji){
+            currentChunkIndex++;
+            inputBuffer = '';
+            //すべて打ち終わったか
+            if(currentChunkIndex === chunkedRomaji.length){
+                nextQuestion();
+            }else{
+                currentTargetRomaji = chunkedRomaji[currentChunkIndex];
+            }
+        }
+        // 画面更新
+        updateQuestionDisplay();
+    }
+    
     //バックスペースの処理
     if(event.key === 'Backspace'){
         inputBuffer = inputBuffer.slice(0, -1);
