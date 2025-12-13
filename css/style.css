@@ -124,11 +124,19 @@ li{
         color: white;
         border-radius: 4px;
         margin: 1rem auto 0;
-        height: 120px;
         width: 550px;
         border: solid;
         border-color: white;
         border-width: 1px
+    }
+
+    .question-area{
+        height: 160px;
+        align-items: center;
+    }
+
+    .answer-area{
+        height: 80px;
     }
   
     .delay-screen{
@@ -144,6 +152,22 @@ li{
     .current{
         color: var(--yellow);
         font-weight: bold;
+    }
+
+    #question-text{
+        padding: 0.5rem 2rem 0.5rem 2rem;
+    }
+
+    #current-guide{
+        text-align: center;
+        color: white;
+        padding: 0.5rem 2rem 0 2rem;
+    }
+
+    #user-input{
+        text-align: center;
+        color: darkgray;
+        padding: 0 2rem 0.5rem 2rem;
     }
 
     /*キーボード*/

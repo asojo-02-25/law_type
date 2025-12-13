@@ -72,7 +72,7 @@ const setupQuestionData = () => {
         }else if(curr.trim() !== ''){
             acc.push(curr);
         }
-        return acc;    
+        return acc;
     },[]);
 
     //インデックスのリセット
@@ -88,6 +88,7 @@ const updateQuestionDisplay = () => {
     const textElement = document.querySelector('#question-text');
     const romajiElement = document.querySelector('#question-romaji')
     const inputElement = document.querySelector('#user-input');
+    const guideElement = document.querySelector('#current-guide');
 
     //文節ごとにspanタグでくくって表示を変化させる
     let htmlContent = '';
@@ -104,6 +105,13 @@ const updateQuestionDisplay = () => {
     });
 
     textElement.innerHTML = htmlContent;
+
+    // 今打つべき文節を入力欄の上に表示する
+    if(chunkedText[currentChunkIndex]){
+        guideElement.textContent = chunkedText[currentChunkIndex];
+    }else{
+        guideElement.textContent = '';
+    }
 
     inputElement.textContent = inputBuffer;
 };
