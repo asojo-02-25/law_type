@@ -173,7 +173,7 @@ const startGame = (config) => {
     // startScreenの非表示
     startScreen.style.display = 'none';
     // gameScreenの表示
-    gameScreen.style.display = 'block';
+    gameScreen.style.display = 'flex';
     // 問題欄、回答欄の遅延出現
     const keyframes = [
         {opacity: 0, transform: 'scale(0)'},
