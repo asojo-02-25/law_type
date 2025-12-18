@@ -54,7 +54,7 @@ li{
     display: flex;
     justify-content: space-between; 
     background-color: var(--gray);
-    height: 8vh;
+    height: 2.25rem;
     align-items: center;
     font-size: 1rem;
     padding: 0 1rem 0 1rem;
@@ -73,19 +73,15 @@ li{
     margin: .5rem 0 .5rem 0;
 }
 
-/* .main-contents{
-    margin-left: 15vw;
-} */
-
 /*タイピング画面*/
     /*設定画面*/
     .typing-contents{
         width: 40rem;
-        height: 29rem;
+        height: 30.5rem;
         background-color: var(--gray);
         border-radius: 8px;
-        padding: 0.25rem 1rem 0.25rem 1rem;
-        margin: 1rem 1rem 0.5rem 1rem;
+        padding: 0.25rem 1rem 0.75rem 1rem;
+        margin: .5rem 1rem .5rem 1rem;
         box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
     }
 
@@ -126,14 +122,35 @@ li{
         color: white;
         border-radius: 4px;
         margin: .5rem auto .5rem;
-        width: 35rem;
+        width: 37.5rem;
         border: solid;
         border-color: white;
         border-width: 1px
     }
 
+    /*question-areaヘッダー*/
+    .question-info{
+        display: flex;
+        justify-content: space-between;
+        padding: .25rem 2rem 0 2rem;
+    }
+
+    /* 分野（左側）：バッジ風のデザイン */
+    .info-badge {
+        background-color: var(--blue);
+        padding: .125rem .5rem;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+
+    /* 出典（右側）：少し控えめに */
+    .info-text {
+        color: var(--light-gray);
+        font-weight: bold;
+    }
+
     .question-area{
-        height: 10rem;
+        height: 15rem;
         align-items: center;
     }
 
@@ -146,7 +163,6 @@ li{
   
     .delay-screen{
         opacity: 0;
-        /* transform-origin: top left; */
     }
 
     .completed{
@@ -160,7 +176,7 @@ li{
     }
 
     #question-text{
-        padding: 0.5rem 2rem 0.5rem 2rem;
+        padding: .25rem 2rem .25rem 2rem;
     }
 
     #current-guide{
@@ -175,6 +191,8 @@ li{
         color: darkgray;
         padding: 0 2rem .5rem 2rem;
         min-height: 3.5rem;
+        width: 100%;
+        word-break: break-all;
     }
 
     /*キーボード*/
@@ -195,7 +213,6 @@ li{
         border-radius: 4px;    
         display: flex;
         justify-content: center;
-        /* align-items: center; */
     }
     
     .key.normal{
@@ -262,7 +279,7 @@ li{
     background-color: var(--gray);
     border-radius: 8px;
     padding: 0.25rem 1rem 0.25rem 1rem;
-    margin: 1.5rem 1rem 0.5rem 1rem;
+    margin: 1rem 1rem 1rem 1rem;
     box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
 }
 
@@ -277,7 +294,7 @@ li{
     background-color: var(--gray);
     border-radius: 8px;
     padding: 0.25rem 1rem 0.25rem 1rem;
-    margin: 1rem 1rem 1rem 1rem;
+    margin: .5rem 1rem 1rem 1rem;
     box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
 }
 
