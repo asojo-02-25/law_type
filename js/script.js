@@ -70,7 +70,7 @@ const setupQuestionData = () => {
         if(curr.match(/([,.])/) && acc.length > 0){
             acc[acc.length - 1] += curr;
         }else if(curr.trim() !== ''){
-            acc.push(curr);
+            acc.push(curr.trim());
         }
         return acc;
     },[]);
@@ -267,7 +267,6 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-// --- 3. ゲーム中の処理 ---
 
 
 
