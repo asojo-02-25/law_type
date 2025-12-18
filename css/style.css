@@ -133,12 +133,15 @@ li{
     }
 
     .question-area{
-        height: 12rem;
+        height: 10rem;
         align-items: center;
     }
 
     .answer-area{
-        height: 6rem;
+        height: 8rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
   
     .delay-screen{
@@ -163,13 +166,13 @@ li{
     #current-guide{
         text-align: center;
         color: white;
-        padding: 0.5rem 2rem 0 2rem;
+        padding: .5rem 2rem 0 2rem;
     }
 
     #user-input{
         text-align: center;
         color: darkgray;
-        padding: 0 2rem 0.5rem 2rem;
+        padding: 0 2rem .5rem 2rem;
     }
 
     /*キーボード*/
