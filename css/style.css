@@ -54,42 +54,40 @@ li{
     display: flex;
     justify-content: space-between; 
     background-color: var(--gray);
-    height: 8vh;
+    height: 2.25rem;
     align-items: center;
     font-size: 1rem;
-    padding: 0 16px 0 16px;
+    padding: 0 1rem 0 1rem;
 }
 
 .nav-flex{
     display: flex;
-    gap: 8px
+    gap: .5rem
 }   
 
 /*メインコンテンツ*/
 .main-flex{
-    display:flex;
-    gap: 3vw;
-    margin: 1rem 0 1rem 0;
-}
-
-.main-contents{
-    margin-left: 15vw;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: .5rem 0 .5rem 0;
 }
 
 /*タイピング画面*/
     /*設定画面*/
     .typing-contents{
-        width: 625px;
-        height: 450px;
+        width: 40rem;
+        height: 30.5rem;
         background-color: var(--gray);
         border-radius: 8px;
-        padding: 0.25rem 1rem 0.25rem 1rem;
-        margin: 1rem 1rem 0.5rem 1rem;
+        padding: 0.25rem 1rem 0.75rem 1rem;
+        margin: .5rem 1rem .5rem 1rem;
         box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
     }
 
     form{
         text-align: center;
+        line-height: 1.75;
     }
 
     form h3{
@@ -99,7 +97,7 @@ li{
     .form-flex{
         display: flex;
         justify-content: center;
-        gap: 30px;
+        gap: 2rem;
         background-color: var(--light-gray);
         border-radius: 4px;
         padding: 1rem 0 1rem 0;
@@ -123,25 +121,48 @@ li{
         background-color: black;
         color: white;
         border-radius: 4px;
-        margin: 1rem auto 0;
-        width: 550px;
+        margin: .5rem auto .5rem;
+        width: 37.5rem;
         border: solid;
         border-color: white;
         border-width: 1px
     }
 
+    /*question-areaヘッダー*/
+    .question-info{
+        display: flex;
+        justify-content: space-between;
+        padding: .25rem 2rem 0 2rem;
+    }
+
+    /* 分野（左側）：バッジ風のデザイン */
+    .info-badge {
+        background-color: var(--blue);
+        padding: .125rem .5rem;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+
+    /* 出典（右側）：少し控えめに */
+    .info-text {
+        color: var(--light-gray);
+        font-weight: bold;
+    }
+
     .question-area{
-        height: 160px;
+        height: 15rem;
         align-items: center;
     }
 
     .answer-area{
-        height: 80px;
+        height: 8rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
   
     .delay-screen{
         opacity: 0;
-        /* transform-origin: top left; */
     }
 
     .completed{
@@ -155,19 +176,23 @@ li{
     }
 
     #question-text{
-        padding: 0.5rem 2rem 0.5rem 2rem;
+        padding: .25rem 2rem .25rem 2rem;
     }
 
     #current-guide{
         text-align: center;
         color: white;
-        padding: 0.5rem 2rem 0 2rem;
+        padding: .5rem 2rem 0 2rem;
+        min-height: 3.5rem;
     }
 
     #user-input{
         text-align: center;
         color: darkgray;
-        padding: 0 2rem 0.5rem 2rem;
+        padding: 0 2rem .5rem 2rem;
+        min-height: 3.5rem;
+        width: 100%;
+        word-break: break-all;
     }
 
     /*キーボード*/
@@ -188,7 +213,6 @@ li{
         border-radius: 4px;    
         display: flex;
         justify-content: center;
-        /* align-items: center; */
     }
     
     .key.normal{
@@ -240,6 +264,8 @@ li{
 
     #game-screen{
         display: none;
+        flex-direction: column;
+        justify-content: center; 
     }
 
     #results-screen{
@@ -249,17 +275,17 @@ li{
 
 /*注意書き*/
 .article-contents{
-    width: 625px;
+    width: 40rem;
     background-color: var(--gray);
     border-radius: 8px;
     padding: 0.25rem 1rem 0.25rem 1rem;
-    margin: 1.5rem 1rem 0.5rem 1rem;
+    margin: 1rem 1rem 1rem 1rem;
     box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
 }
 
 /*サイドコンテンツ*/
 .aside-all-contents{
-    width: 20vw;
+    width: 18rem;
     min-width: 0;
     flex-shrink: 1;
 }
@@ -268,7 +294,7 @@ li{
     background-color: var(--gray);
     border-radius: 8px;
     padding: 0.25rem 1rem 0.25rem 1rem;
-    margin: 1rem 1rem 1rem 1rem;
+    margin: .5rem 1rem 1rem 1rem;
     box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
 }
 

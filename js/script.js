@@ -27,7 +27,7 @@ const getGameSettings = () => {
 };
 
 // --- 1.3. startGame関数の定義 ---
-// --- 1.3.1. 変数の定義 ---
+// --- 1.3.1. 定数の定義 ---
 let questionQueue = [];         // 実際に出題される問題のリスト
 let currentQuestionIndex = 0;   // 今何問目か
 let chunkedText = [];           // 日本語を読点で区切ったリスト
@@ -40,7 +40,7 @@ let inputBuffer = '';           // ユーザーが打っている正誤未確定
 const typingQuestions = [
     {
         text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである。',
-        romaji: 'kennpounijuunijouikkouha,nipponnkokunainiokerukyojuu/itennnojiyuuwohoshousurumunewokiteisurunitodomari,gaikokujinngawagakunininyuukokusurukotonituitehanannrakiteisiteinaimonodearu.',
+        romaji: 'kennpounijuunijouikkouha,nihonnkokunainiokerukyojuu/itennnojiyuuwohoshousurumunewokiteisurunitodomari,gaikokujinngawagakunininyuukokusurukotonituitehanannrakiteisiteinaimonodearu.',
         field: '憲法',
         source: 'マクリーン事件',
     },
@@ -70,7 +70,7 @@ const setupQuestionData = () => {
         if(curr.match(/([,.])/) && acc.length > 0){
             acc[acc.length - 1] += curr;
         }else if(curr.trim() !== ''){
-            acc.push(curr);
+            acc.push(curr.trim());
         }
         return acc;
     },[]);
@@ -89,6 +89,9 @@ const updateQuestionDisplay = () => {
     const romajiElement = document.querySelector('#question-romaji')
     const inputElement = document.querySelector('#user-input');
     const guideElement = document.querySelector('#current-guide');
+    const currentQuestion = questionQueue[currentQuestionIndex];
+    const fieldElement = document.querySelector('#question-field');
+    const sourceElement  = document.querySelector('#question-source'); 
 
     //文節ごとにspanタグでくくって表示を変化させる
     let htmlContent = '';
@@ -105,6 +108,12 @@ const updateQuestionDisplay = () => {
     });
 
     textElement.innerHTML = htmlContent;
+
+    // 分野、出典を表示
+    if(currentQuestion){
+        fieldElement.textContent = currentQuestion.field;
+        sourceElement.textContent = currentQuestion.source;
+    }
 
     // 今打つべき文節を入力欄の上に表示する
     if(chunkedText[currentChunkIndex]){
@@ -173,7 +182,7 @@ const startGame = (config) => {
     // startScreenの非表示
     startScreen.style.display = 'none';
     // gameScreenの表示
-    gameScreen.style.display = 'block';
+    gameScreen.style.display = 'flex';
     // 問題欄、回答欄の遅延出現
     const keyframes = [
         {opacity: 0, transform: 'scale(0)'},
@@ -267,7 +276,6 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-// --- 3. ゲーム中の処理 ---
 
 
 
