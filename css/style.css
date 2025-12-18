@@ -167,12 +167,14 @@ li{
         text-align: center;
         color: white;
         padding: .5rem 2rem 0 2rem;
+        min-height: 3.5rem;
     }
 
     #user-input{
         text-align: center;
         color: darkgray;
         padding: 0 2rem .5rem 2rem;
+        min-height: 3.5rem;
     }
 
     /*キーボード*/
