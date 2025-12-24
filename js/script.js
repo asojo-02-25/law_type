@@ -13,6 +13,9 @@ const guideElement = document.querySelector('#current-guide');
 const fieldElement = document.querySelector('#question-field');
 const sourceElement  = document.querySelector('#question-source'); 
 
+console.log(fieldElement);
+console.log(sourceElement);
+
 // --- 1.2. 変数 / 定数の定義 ---
 let questionQueue = [];         // 実際に出題される問題のリスト
 let currentQuestionIndex = 0;   // 今何問目か
@@ -39,27 +42,8 @@ const keyIdMap = {
     '\\' : 'BackSlash',
 };
 
-// --- 1.3. 問題を格納する配列 ---
-const typingQuestions = [
-    {
-        text: '国際慣習法',
-        romaji: 'kokusaikannshuuhou',
-        field: 'テスト',
-        source: 'test',
-    }
-    // {
-    //     text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである。',
-    //     romaji: 'kennpounijuunijouikkouha,nihonnkokunainiokerukyojuu/itennnojiyuuwohoshousurumunewokiteisurunitodomari,gaikokujinngawagakunininyuukokusurukotonituitehanannrakiteisiteinaimonodearu.',
-    //     field: '憲法',
-    //     source: 'マクリーン事件',
-    // },
-    // {
-    //     text: '国際慣習法上、国家は外国人を受け入れる義務を負うものではなく、特別の条約がない限り、外国人を自国内に受け入れるかどうか、また、これを受け入れる場合にいかなる条件を付するかを、当該国家が自由に決定することができるものとされている。',
-    //     romaji: 'kokusaikannshuuhoujou,kokkahagaikokujinnwoukeirerugimuwooumonodehanaku,tokubetunojouyakuganaikagiri,gaikokujinnwojikokunainiukeirerukadouka,mata,korewoukeirerubaainiikanarujoukennwohusurukawo,tougaikokkagajiyuuniketteisurukotogadekirumonotosareteiru.',
-    //     field: '憲法',
-    //     source: 'マクリーン事件',
-    // },
-];
+// --- 1.3. 問題を格納する配列のインポート ---
+import {typingQuestions} from './question.js';
 
 // --- 1.4. 設定を取得する関数の定義 ---
 const getGameSettings = () => {
