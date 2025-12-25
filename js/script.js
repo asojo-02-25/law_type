@@ -7,7 +7,6 @@ const resultsScreen = document.querySelector('#results-screen');
 const delayScreens = document.querySelectorAll('.delay-screen');
 const btn = document.querySelector('#start-button');
 const textElement = document.querySelector('#question-text');
-const romajiElement = document.querySelector('#question-romaji')
 const inputElement = document.querySelector('#user-input');
 const guideElement = document.querySelector('#current-guide');
 const fieldElement = document.querySelector('#question-field');
