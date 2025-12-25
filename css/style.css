@@ -256,6 +256,11 @@ li{
     .key.enter-bottom span{
         transform: translateY(-12px);
     }
+    .key.active{
+        background-color: var(--yellow);
+        color: black;
+        font-weight: bold;
+    }
 
     /*ゲーム中の画面切り替え*/
     #start-screen{
