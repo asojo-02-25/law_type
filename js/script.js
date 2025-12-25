@@ -1,21 +1,5 @@
 // --- 1. ゲーム関連処理 ---
-// --- 1.1. html要素の取得 ---
-const form = document.querySelector('#form');
-const startScreen = document.querySelector('#start-screen');
-const gameScreen = document.querySelector('#game-screen');
-const resultsScreen = document.querySelector('#results-screen');
-const delayScreens = document.querySelectorAll('.delay-screen');
-const btn = document.querySelector('#start-button');
-const textElement = document.querySelector('#question-text');
-const inputElement = document.querySelector('#user-input');
-const guideElement = document.querySelector('#current-guide');
-const fieldElement = document.querySelector('#question-field');
-const sourceElement  = document.querySelector('#question-source'); 
-
-console.log(fieldElement);
-console.log(sourceElement);
-
-// --- 1.2. 変数 / 定数の定義 ---
+// --- 1.1. 変数 / 定数の定義 ---
 let questionQueue = [];         // 実際に出題される問題のリスト
 let currentQuestionIndex = 0;   // 今何問目か
 let chunkedText = [];           // 日本語を読点で区切ったリスト
@@ -40,6 +24,19 @@ const keyIdMap = {
     '/' : 'Slash',
     '\\' : 'BackSlash',
 };
+
+// --- 1.2. html要素の取得 ---
+const form = document.querySelector('#form');
+const startScreen = document.querySelector('#start-screen');
+const gameScreen = document.querySelector('#game-screen');
+const resultsScreen = document.querySelector('#results-screen');
+const delayScreens = document.querySelectorAll('.delay-screen');
+const btn = document.querySelector('#start-button');
+const textElement = document.querySelector('#question-text');
+const inputElement = document.querySelector('#user-input');
+const guideElement = document.querySelector('#current-guide');
+const fieldElement = document.querySelector('#question-field');
+const sourceElement  = document.querySelector('#question-source'); 
 
 // --- 1.3. 問題を格納する配列のインポート ---
 import {typingQuestions} from './question.js';
@@ -139,7 +136,7 @@ const highlightMissedKey = (char) => {
 // --- 1.7. 画面表示の更新 ---
 const updateQuestionDisplay = () => {
 
-    //文節ごとにspanタグでくくって表示を変化させる
+    // 文節ごとにspanタグでくくって表示を変化させる
     let htmlContent = '';
     chunkedText.forEach((chunk, index) => {
         let className = '';
@@ -154,10 +151,13 @@ const updateQuestionDisplay = () => {
 
     textElement.innerHTML = htmlContent;
 
+    fieldElement.textContent = 'テスト分野';
+    sourceElement.textContent = 'テスト出典';
+
     // 分野、出典を表示
     if(currentQuestion){
-        fieldElement.textContent = currentQuestion.field;
-        sourceElement.textContent = currentQuestion.source;
+        // fieldElement.textContent = currentQuestion.field;
+        // sourceElement.textContent = currentQuestion.source;
     }
 
     // 今打つべき文節を入力欄の上に表示する
