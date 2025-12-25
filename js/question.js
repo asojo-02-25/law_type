@@ -2,8 +2,8 @@ export const typingQuestions = [
     {
         text: '国際慣習法',
         romaji: 'kokusaikannshuuhou',
-        field: 'テスト',
-        source: 'test',
+        field: 'テスト分野',
+        source: 'テスト出典',
     }
     // {
     //     text: '憲法二二条一項は、日本国内における居住・移転の自由を保障する旨を規定するにとどまり、外国人がわが国に入国することについてはなんら規定していないものである。',

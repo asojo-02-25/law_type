@@ -7,7 +7,6 @@ let chunkedRomaji = [];         // ローマ字をカンマで区切ったリス
 let currentChunkIndex = 0;       // 今何個目の文節を打っているか
 let currentTargetRomaji = '';   // 今打つべきローマ字の文節
 let inputBuffer = '';           // ユーザーが打っている正誤未確定の文節
-const currentQuestion = questionQueue[currentQuestionIndex];
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
@@ -136,6 +135,8 @@ const highlightMissedKey = (char) => {
 // --- 1.7. 画面表示の更新 ---
 const updateQuestionDisplay = () => {
 
+    const currentQuestion = questionQueue[currentQuestionIndex];
+
     // 文節ごとにspanタグでくくって表示を変化させる
     let htmlContent = '';
     chunkedText.forEach((chunk, index) => {
@@ -151,13 +152,10 @@ const updateQuestionDisplay = () => {
 
     textElement.innerHTML = htmlContent;
 
-    fieldElement.textContent = 'テスト分野';
-    sourceElement.textContent = 'テスト出典';
-
     // 分野、出典を表示
     if(currentQuestion){
-        // fieldElement.textContent = currentQuestion.field;
-        // sourceElement.textContent = currentQuestion.source;
+        fieldElement.textContent = currentQuestion.field;
+        sourceElement.textContent = currentQuestion.source;
     }
 
     // 今打つべき文節を入力欄の上に表示する
