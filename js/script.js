@@ -10,7 +10,7 @@ let inputBuffer = '';           // ユーザーが打っている正誤未確定
 let gameStartTime = 0;          // 開始タイムスタンプ
 let correctKeyCount = 0;        // 正解タイプ数
 let missedKeyCount = 0;           // ミスタイプ数
-let missedKeysMap = {};         // ミスタイプしたキーを格納する配列
+let missedKeysMap = {};         // ミスタイプしたキーを格納するオブジェクト
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
@@ -189,17 +189,21 @@ const finishGame = () => {
     const accuracy = totalInputs > 0 ? (correctKeyCount / totalInputs).toFixed(1) : 100;
 
     // 苦手キーの特定
-    let weakKeys = '特になし';
+    let weakKeysList = [];
     let maxMisses = 0;
     for (const [key,count] of Object.entries(missedKeysMap)){
         if (count > maxMisses){
             maxMisses = count;
-            weakKeys = key;
+            weakKeysList = [key];
+        }else if(count == maxMisses){
+            weakKeysList.push(key);
         }
     };
+    const weakKeys = weakKeysList.length > 0? weakKeysList.join(',') : '特になし'
+
     // 保存用データオブジェクト
     const resultData = {
-        date: new Date().toISOString,
+        date: new Date().toISOString(),
         wpm: wpm,
         missCount: missedKeyCount,
         accuracy: accuracy,
@@ -208,7 +212,7 @@ const finishGame = () => {
     };
     
     // データの保存
-    saveToLocalStrage(resultData);
+    saveToLocalStorage(resultData);
 
     // 画面表示の更新
     document.querySelector('#current-guide').textContent = '';
@@ -222,13 +226,13 @@ const finishGame = () => {
 };
 
 // --- localStrageへの保存 ---
-const saveToLocalStrage = (data) => {
+const saveToLocalStorage = (data) => {
     const STORAGE_KEY = 'law_type_play_data';
     let history = [];
     try {
         history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    }catch(e){
-        console.error('storage parse error', e);
+    }catch(error){
+        console.error('storage parse error', error);
     }
     history.push(data);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
@@ -322,38 +326,37 @@ const startGame = (config) => {
     }
 };
 
-// --- 1.10. フォーム提出 → ゲーム開始の実行処理 ---
+// --- フォーム提出 → ゲーム開始 ---
 form.addEventListener('submit', (event) => {
     event.preventDefault();
     const currentSettings = getGameSettings();
     startGame(currentSettings);
 });
 
-// --- 1.11. Escキーによりゲームを中断
+// --- Escキーによりゲームを中断 ---
 const resetGame = () => {
-    //画面の切り替え
+    // 画面の切り替え
     startScreen.style.display = 'block';
     gameScreen.style.display = 'none';
     resultsScreen.style.display = 'none';
 
-    //アニメーションのリセット
+    // アニメーションのリセット
     for(const screen of delayScreens){
-        //スタイルの不透明度とサイズを復元
+        // スタイルの不透明度とサイズを復元
         screen.style.opacity = '0';
         screen.style.transform = 'scale(0)';
-        //アニメーションの解除
+        // アニメーションの解除
         screen.getAnimations().forEach((animation) => {
             animation.cancel();
         });
     }
 };
 
-// --- 1.12. ゲーム進行中のキーダウンイベント ---
+// --- ゲーム進行中のキーダウンイベント ---
 document.addEventListener('keydown', (event) => {
     
     if(event.code === 'Space'){
         if(startScreen.style.display !== 'none'){
-            console.log("spaceが押下されました")
             event.preventDefault();
             btn.click();
         }else if(resultsScreen.style.display !== 'none'){
