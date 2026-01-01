@@ -10,7 +10,7 @@ let inputBuffer = '';           // ユーザーが打っている正誤未確定
 let gameStartTime = 0;          // 開始タイムスタンプ
 let correctKeyCount = 0;        // 正解タイプ数
 let missedKeyCount = 0;           // ミスタイプ数
-let missedkeysMap = {};         // ミスタイプしたキーを格納する配列
+let missedKeysMap = {};         // ミスタイプしたキーを格納する配列
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
@@ -203,7 +203,7 @@ const finishGame = () => {
         wpm: wpm,
         missCount: missedKeyCount,
         accuracy: accuracy,
-        weakKey: weakKey,
+        weakKey: weakKeys,
         duration: durationSec,
     };
     
@@ -219,7 +219,6 @@ const finishGame = () => {
     });
 
     showResults(resultData);
-    updateSidePanelStatus();
 };
 
 // --- localStrageへの保存 ---
@@ -266,7 +265,7 @@ const startGame = (config) => {
 
     correctKeyCount = 0;
     missedKeyCount = 0;
-    missedkeysMap = {};
+    missedKeysMap = {};
     gameStartTime = Date.now();
 
     if(config.settings.includes('roman-letters-represent')){
@@ -335,7 +334,7 @@ const resetGame = () => {
     //画面の切り替え
     startScreen.style.display = 'block';
     gameScreen.style.display = 'none';
-    resultsScreen.style.diplay = 'none';
+    resultsScreen.style.display = 'none';
 
     //アニメーションのリセット
     for(const screen of delayScreens){
@@ -352,10 +351,11 @@ const resetGame = () => {
 // --- 1.12. ゲーム進行中のキーダウンイベント ---
 document.addEventListener('keydown', (event) => {
     
-    if(event.code === 'space'){
+    if(event.code === 'Space'){
         if(startScreen.style.display !== 'none'){
+            console.log("spaceが押下されました")
             event.preventDefault();
-            btn.click();    
+            btn.click();
         }else if(resultsScreen.style.display !== 'none'){
             event.preventDefault();
             // restartButton.click();
@@ -394,7 +394,7 @@ document.addEventListener('keydown', (event) => {
             // 苦手キーの収集
             if(nextExpectedChar){
                 const upperChar = nextExpectedChar.toUpperCase();
-                missedKeysMap[uppperChar] = (missedkeysMap[upperChar] || 0) + 1;
+                missedKeysMap[upperChar] = (missedKeysMap[upperChar] || 0) + 1;
             }
 
             highlightMissedKey(event.key);    
