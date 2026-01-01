@@ -1,5 +1,5 @@
-// --- 1. ゲーム関連処理 ---
-// --- 1.1. 変数 / 定数の定義 ---
+// --- ゲーム関連処理 ---
+// --- 変数 / 定数の定義 ---
 let questionQueue = [];         // 実際に出題される問題のリスト
 let currentQuestionIndex = 0;   // 今何問目か
 let chunkedText = [];           // 日本語を読点で区切ったリスト
@@ -7,6 +7,10 @@ let chunkedRomaji = [];         // ローマ字をカンマで区切ったリス
 let currentChunkIndex = 0;       // 今何個目の文節を打っているか
 let currentTargetRomaji = '';   // 今打つべきローマ字の文節
 let inputBuffer = '';           // ユーザーが打っている正誤未確定の文節
+let gameStartTime = 0;          // 開始タイムスタンプ
+let correctKeyCount = 0;        // 正解タイプ数
+let missedKeyCount = 0;           // ミスタイプ数
+let missedKeysMap = {};         // ミスタイプしたキーを格納する配列
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
@@ -24,7 +28,7 @@ const keyIdMap = {
     '\\' : 'BackSlash',
 };
 
-// --- 1.2. html要素の取得 ---
+// --- html要素の取得 ---
 const form = document.querySelector('#form');
 const startScreen = document.querySelector('#start-screen');
 const gameScreen = document.querySelector('#game-screen');
@@ -37,10 +41,10 @@ const guideElement = document.querySelector('#current-guide');
 const fieldElement = document.querySelector('#question-field');
 const sourceElement  = document.querySelector('#question-source'); 
 
-// --- 1.3. 問題を格納する配列のインポート ---
+// --- 問題を格納する配列のインポート ---
 import {typingQuestions} from './question.js';
 
-// --- 1.4. 設定を取得する関数の定義 ---
+// --- 設定を取得する関数の定義 ---
 const getGameSettings = () => {
     //問題形式
     const format = document.querySelector('input[name="format"]:checked').value;
@@ -59,7 +63,7 @@ const getGameSettings = () => {
     };
 };
 
-// --- 1.5. データのセットアップ ---
+// --- データのセットアップ ---
 const setupQuestionData = () => {
     const currentQuestion = questionQueue[currentQuestionIndex];
     // 日本語を句読点で分割
@@ -88,7 +92,7 @@ const setupQuestionData = () => {
     currentTargetRomaji = chunkedRomaji[0];
 };
 
-// --- 1.6. タイプべきキーのハイライト ---
+// --- タイプべきキーのハイライト ---
 const highlightNextChar = () => {
     
     if(!currentTargetRomaji) return;
@@ -111,7 +115,7 @@ const highlightNextChar = () => {
     }     
 };
 
-// --- 1.7. ミスタイプしたキーのハイライト ---
+// --- ミスタイプしたキーのハイライト ---
 const highlightMissedKey = (char) => {
     // id の取得
     const targetId = keyIdMap[char] || char.toUpperCase();
@@ -132,7 +136,7 @@ const highlightMissedKey = (char) => {
     }
 };
 
-// --- 1.7. 画面表示の更新 ---
+// --- 画面表示の更新 ---
 const updateQuestionDisplay = () => {
 
     const currentQuestion = questionQueue[currentQuestionIndex];
@@ -171,7 +175,75 @@ const updateQuestionDisplay = () => {
     highlightNextChar();
 };
 
-// --- 1.8. 次の問題に進む準備 ---
+// --- ゲーム終了時の処理 ---
+const finishGame = () => {
+    // 終了タイムスタンプ
+    const gameEndTime = Date.now();
+    // 経過時間
+    const durationSec = (gameEndTime - gameStartTime) / 1000;
+
+    // wpm の計算 (5文字 / 単語)
+    const wpm = durationSec > 0 ? Math.round((correctKeyCount / (durationSec * 5)) * 60) : 0;
+    // 正答率の計算
+    const totalInputs = correctKeyCount + missedKeyCount;
+    const accuracy = totalInputs > 0 ? (correctKeyCount / totalInputs).toFixed(1) : 100;
+
+    // 苦手キーの特定
+    let weakKeys = '特になし';
+    let maxMisses = 0;
+    for (const [key,count] of Object.entries(missedKeysMap)){
+        if (count > maxMisses){
+            maxMisses = count;
+            weakKeys = key;
+        }
+    };
+    // 保存用データオブジェクト
+    const resultData = {
+        date: new Date().toISOString,
+        wpm: wpm,
+        missCount: missedKeyCount,
+        accuracy: accuracy,
+        weakKey: weakKeys,
+        duration: durationSec,
+    };
+    
+    // データの保存
+    saveToLocalStrage(resultData);
+
+    // 画面表示の更新
+    document.querySelector('#current-guide').textContent = '';
+    document.querySelector('#current-guide').style.display = 'none';
+    document.querySelector('#user-input').textContent = 'finish!';
+    document.querySelectorAll('.key.active').forEach((keys) => {
+        keys.classList.remove('active');
+    });
+
+    showResults(resultData);
+};
+
+// --- localStrageへの保存 ---
+const saveToLocalStrage = (data) => {
+    const STORAGE_KEY = 'law_type_play_data';
+    let history = [];
+    try {
+        history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    }catch(e){
+        console.error('storage parse error', e);
+    }
+    history.push(data);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+};
+
+// リザルト画面の表示
+const showResults = (data) => {
+
+    gameScreen.style.display = 'none';
+    resultsScreen.style.display = 'block';
+    
+    // リトライボタンの設定
+};
+
+// --- 次の問題に進む準備 ---
 const nextQuestion = () => {
     currentQuestionIndex++;     // 次の問題へ
 
@@ -180,22 +252,21 @@ const nextQuestion = () => {
         setupQuestionData();
         updateQuestionDisplay();
     }else{
-        document.querySelector('#current-guide').textContent = '';
-        document.querySelector('#current-guide').style.display = 'none';
-        document.querySelector('#user-input').textContent = 'finish!';
-        document.querySelectorAll('.key.active').forEach((keys) => {
-            keys.classList.remove('active');
-        });
-        // 結果画面への遷移などを後で記述
+        finishGame();
     }
+    // 結果画面への遷移などを後で記述
 };
 
-// --- 1.9. startGame関数 ---
+// --- ゲームスタート時の処理 ---
 const startGame = (config) => {
     guideElement.style.display = 'block';
     
-    // 設定の取得・反映
-    console.log("開始設定", config);
+    console.log("開始設定", config); // 設定の取得・反映確認
+
+    correctKeyCount = 0;
+    missedKeyCount = 0;
+    missedKeysMap = {};
+    gameStartTime = Date.now();
 
     if(config.settings.includes('roman-letters-represent')){
         console.log("ローマ字を表示します");
@@ -231,10 +302,10 @@ const startGame = (config) => {
     updateQuestionDisplay();
 
     // ディスプレイ関連
-    // startScreenの非表示
     startScreen.style.display = 'none';
-    // gameScreenの表示
     gameScreen.style.display = 'flex';
+    resultsScreen.style.display = 'none';
+    
     // 問題欄、回答欄の遅延出現
     const keyframes = [
         {opacity: 0, transform: 'scale(0)'},
@@ -261,8 +332,10 @@ form.addEventListener('submit', (event) => {
 // --- 1.11. Escキーによりゲームを中断
 const resetGame = () => {
     //画面の切り替え
-    gameScreen.style.display = 'none';
     startScreen.style.display = 'block';
+    gameScreen.style.display = 'none';
+    resultsScreen.style.display = 'none';
+
     //アニメーションのリセット
     for(const screen of delayScreens){
         //スタイルの不透明度とサイズを復元
@@ -273,22 +346,27 @@ const resetGame = () => {
             animation.cancel();
         });
     }
-    // 将来的にゲームのタイマー等をリセットする処理を記述する必要有
 };
 
 // --- 1.12. ゲーム進行中のキーダウンイベント ---
 document.addEventListener('keydown', (event) => {
-    // スペース押下時にもフォーム提出と同様の処理を実施
-    if(event.code === 'Space' && startScreen.style.display !== 'none'){
-        event.preventDefault();
-        btn.click();
+    
+    if(event.code === 'Space'){
+        if(startScreen.style.display !== 'none'){
+            console.log("spaceが押下されました")
+            event.preventDefault();
+            btn.click();
+        }else if(resultsScreen.style.display !== 'none'){
+            event.preventDefault();
+            // restartButton.click();
+        }
     }
 
-    // Escキー押下時にゲーム中断
     if(event.code === 'Escape' && gameScreen !== 'none'){
         event.preventDefault();
         resetGame();
     }
+
     //キー入力の判定処理
     // ゲーム中以外は無視
     if(gameScreen.style.display === 'none')return;
@@ -297,6 +375,7 @@ document.addEventListener('keydown', (event) => {
     if(event.key.length === 1){
         const nextExpectedChar = currentTargetRomaji[inputBuffer.length];
         if(event.key === nextExpectedChar){
+            correctKeyCount++;
             inputBuffer += event.key;
              // 分節の入力完了チェック
             if(inputBuffer === currentTargetRomaji){
@@ -311,6 +390,13 @@ document.addEventListener('keydown', (event) => {
                 }
             }
         }else{
+            missedKeyCount++
+            // 苦手キーの収集
+            if(nextExpectedChar){
+                const upperChar = nextExpectedChar.toUpperCase();
+                missedKeysMap[upperChar] = (missedKeysMap[upperChar] || 0) + 1;
+            }
+
             highlightMissedKey(event.key);    
         }
         // 画面更新
