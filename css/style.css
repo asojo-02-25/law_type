@@ -2,20 +2,32 @@
 
 /*共通部分*/
 :root{
-    --gray: gray;
-    --blue: #005070;
-    --yellow: #e5cf6e;
-    --light-gray: #dddddd;
+    --base-color: black;
+    --main-color: #1c2541;
+    --accent-color: #e5cf6e;
+    --font-white: white;
+    --font-black: black;
+
 }
 
 html {
     font-size: 100%;
-    background-color: var(--light-gray)
+    background-color: var(--base-color)
+}
+
+h1{
+    color: var(--font-white);
+    font-size: 1.2rem;
 }
 
 p{
     font-size: 1rem;
     line-height: 2;
+    color: var(--font-white);
+}
+
+span{
+    color: var(--font-white);
 }
 
 a{
@@ -25,6 +37,10 @@ a{
 
 .font-small{
     font-size: 0.75rem;
+}
+
+.font-black{
+    color: var(--font-black);
 }
 
 .right{
@@ -53,17 +69,18 @@ li{
 .header-flex{
     display: flex;
     justify-content: space-between; 
-    background-color: var(--gray);
+    background-color: var(--main-color);
     height: 2.25rem;
     align-items: center;
     font-size: 1rem;
     padding: 0 1rem 0 1rem;
+    white-space: nowrap;
 }
 
 .nav-flex{
     display: flex;
     gap: .5rem
-}   
+}
 
 /*メインコンテンツ*/
 .main-flex{
@@ -78,7 +95,7 @@ li{
     .typing-contents{
         width: 40rem;
         height: 30.5rem;
-        background-color: var(--gray);
+        background-color: var(--main-color);
         border-radius: 8px;
         padding: 0.25rem 1rem 0.75rem 1rem;
         margin: .5rem 1rem .5rem 1rem;
@@ -90,7 +107,7 @@ li{
         line-height: 1.75;
     }
 
-    form h3{
+    form h1{
         padding: 0.5rem 0 0.5rem 0;
     }
 
@@ -98,7 +115,7 @@ li{
         display: flex;
         justify-content: center;
         gap: 2rem;
-        background-color: var(--light-gray);
+        background-color: var(--base-color);
         border-radius: 4px;
         padding: 1rem 0 1rem 0;
         margin: 0 0 1rem 0;
@@ -106,7 +123,7 @@ li{
 
     #start-button{
         font-size: 1rem;
-        background-color: var(--yellow);
+        background-color: var(--accent-color);
         border-radius: 4px;
         padding: 0.5rem 2rem 0.5rem 2rem;
         cursor: pointer;
@@ -137,7 +154,7 @@ li{
 
     /* 分野（左側）：バッジ風のデザイン */
     .info-badge {
-        background-color: var(--blue);
+        background-color: var(--main-color);
         padding: .125rem .5rem;
         border-radius: 4px;
         font-weight: bold;
@@ -145,7 +162,7 @@ li{
 
     /* 出典（右側）：少し控えめに */
     .info-text {
-        color: var(--light-gray);
+        color: var(--base-color);
         font-weight: bold;
     }
 
@@ -166,12 +183,12 @@ li{
     }
 
     .completed{
-        color: var(--light-gray);
+        color: var(--base-color);
         opacity: 0.5;
     }
 
     .current{
-        color: var(--yellow);
+        color: var(--accent-color);
         font-weight: bold;
     }
 
@@ -188,7 +205,7 @@ li{
 
     #user-input{
         text-align: center;
-        color: darkgray;
+        color: dark#2b3a67;
         padding: 0 2rem .5rem 2rem;
         min-height: 3.5rem;
         width: 100%;
@@ -257,7 +274,7 @@ li{
         transform: translateY(-12px);
     }
     .key.active{
-        background-color: var(--yellow);
+        background-color: var(--accent-color);
         color: black;
         font-weight: bold;
     }
@@ -281,7 +298,7 @@ li{
 /*注意書き*/
 .article-contents{
     width: 40rem;
-    background-color: var(--gray);
+    background-color: var(--main-color);
     border-radius: 8px;
     padding: 0.25rem 1rem 0.25rem 1rem;
     margin: 1rem 1rem 1rem 1rem;
@@ -296,20 +313,20 @@ li{
 }
 
 .aside-contents{
-    background-color: var(--gray);
+    background-color: var(--main-color);
     border-radius: 8px;
     padding: 0.25rem 1rem 0.25rem 1rem;
     margin: .5rem 1rem 1rem 1rem;
     box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
 }
 
-aside h3{
+aside h1{
     gap: 0 0 1rem 0;
 }
 
 /*フッター*/
 footer{
-    background-color: gray;
+    background-color: #2b3a67;
     padding: 8px 0 8px 0;
     height: 16vh;
 }
