@@ -2,29 +2,47 @@
 
 /*共通部分*/
 :root{
-    --gray: gray;
-    --blue: #005070;
-    --yellow: #e5cf6e;
-    --light-gray: #dddddd;
+    --base-color: #e0e1dd;
+    --main-color: #1b263b;
+    --accent-color-1: #e5cf6e;
+    --accent-color-2: #415a77;
+    --accent-color-3: #778da9;
+    --font-white: #e0e1dd;
+    --font-black: #0d1b2a;
+
 }
 
 html {
     font-size: 100%;
-    background-color: var(--light-gray)
+    background-color: var(--base-color)
+}
+
+h1{
+    color: var(--font-white);
+    font-size: 1.2rem;
+    padding: 0.5rem 0 0.5rem 0;
 }
 
 p{
     font-size: 1rem;
     line-height: 2;
+    color: var(--font-white);
+}
+
+span{
+    color: var(--font-white);
 }
 
 a{
     text-decoration: none;
-    color: black;
 }
 
 .font-small{
     font-size: 0.75rem;
+}
+
+.font-black{
+    color: var(--font-black);
 }
 
 .right{
@@ -53,17 +71,18 @@ li{
 .header-flex{
     display: flex;
     justify-content: space-between; 
-    background-color: var(--gray);
+    background-color: var(--main-color);
     height: 2.25rem;
     align-items: center;
     font-size: 1rem;
     padding: 0 1rem 0 1rem;
+    white-space: nowrap;
 }
 
 .nav-flex{
     display: flex;
     gap: .5rem
-}   
+}
 
 /*メインコンテンツ*/
 .main-flex{
@@ -78,7 +97,7 @@ li{
     .typing-contents{
         width: 40rem;
         height: 30.5rem;
-        background-color: var(--gray);
+        background-color: var(--main-color);
         border-radius: 8px;
         padding: 0.25rem 1rem 0.75rem 1rem;
         margin: .5rem 1rem .5rem 1rem;
@@ -86,27 +105,54 @@ li{
     }
 
     form{
-        text-align: center;
         line-height: 1.75;
-    }
-
-    form h3{
-        padding: 0.5rem 0 0.5rem 0;
+        text-align: center;
     }
 
     .form-flex{
         display: flex;
         justify-content: center;
         gap: 2rem;
-        background-color: var(--light-gray);
+        background-color: var(--base-color);
         border-radius: 4px;
         padding: 1rem 0 1rem 0;
         margin: 0 0 1rem 0;
     }
 
+    input[type="radio"]{
+        appearance: none;
+        -webkit-appearance: none;
+    }
+    
+    input[type="radio"] + label{
+        display: inline-block;
+        width: 100%;
+        padding: 0 0.25rem 0 0.25rem;
+    }
+    
+    input[type="radio"]:checked + label{
+        font-weight: bold;
+        border-color: var(--main-color);
+    }
+    
+    input[type="checkbox"]:checked + label{
+        font-weight: bold;
+    }
+
+    label{
+        cursor: pointer;
+        background-color: var(--base-color);
+        border: solid 1.5px var(--base-color);
+        border-radius: 2px;
+    }
+
+    label:hover{
+        font-weight: bold;
+    }
+    
     #start-button{
         font-size: 1rem;
-        background-color: var(--yellow);
+        background-color: var(--accent-color-1);
         border-radius: 4px;
         padding: 0.5rem 2rem 0.5rem 2rem;
         cursor: pointer;
@@ -118,13 +164,13 @@ li{
     
     /*ゲーム画面*/
     .game-area{
-        background-color: black;
-        color: white;
+        background-color: var(--font-black);
+        color: var(--font-white);
         border-radius: 4px;
         margin: .5rem auto .5rem;
         width: 37.5rem;
         border: solid;
-        border-color: white;
+        border-color: var(--font-white);
         border-width: 1px
     }
 
@@ -137,7 +183,7 @@ li{
 
     /* 分野（左側）：バッジ風のデザイン */
     .info-badge {
-        background-color: var(--blue);
+        background-color: var(--main-color);
         padding: .125rem .5rem;
         border-radius: 4px;
         font-weight: bold;
@@ -145,7 +191,7 @@ li{
 
     /* 出典（右側）：少し控えめに */
     .info-text {
-        color: var(--light-gray);
+        color: var(--base-color);
         font-weight: bold;
     }
 
@@ -166,12 +212,12 @@ li{
     }
 
     .completed{
-        color: var(--light-gray);
+        color: var(--base-color);
         opacity: 0.5;
     }
 
     .current{
-        color: var(--yellow);
+        color: var(--accent-color-1);
         font-weight: bold;
     }
 
@@ -181,14 +227,14 @@ li{
 
     #current-guide{
         text-align: center;
-        color: white;
+        color: var(--font-white);
         padding: .5rem 2rem 0 2rem;
         min-height: 3.5rem;
     }
 
     #user-input{
         text-align: center;
-        color: darkgray;
+        color: var(--accent-color-3);
         padding: 0 2rem .5rem 2rem;
         min-height: 3.5rem;
         width: 100%;
@@ -205,11 +251,11 @@ li{
     }
 
     .key{
-        color: white;
-        background-color: black;
+        color: var(--font-white);
+        background-color: var(--font-black);
         border-style: solid;
         border-width: 1px;
-        border-color: white;
+        border-color: var(--font-white);
         border-radius: 4px;    
         display: flex;
         justify-content: center;
@@ -257,8 +303,8 @@ li{
         transform: translateY(-12px);
     }
     .key.active{
-        background-color: var(--yellow);
-        color: black;
+        background-color: var(--accent-color-1);
+        color: var(--font-black);
         font-weight: bold;
     }
 
@@ -279,37 +325,47 @@ li{
      
 
 /*注意書き*/
-.article-contents{
+article{
     width: 40rem;
-    background-color: var(--gray);
+    background-color: var(--main-color);
     border-radius: 8px;
     padding: 0.25rem 1rem 0.25rem 1rem;
     margin: 1rem 1rem 1rem 1rem;
     box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
 }
-
-/*サイドコンテンツ*/
-.aside-all-contents{
-    width: 18rem;
-    min-width: 0;
-    flex-shrink: 1;
+.article-contents{
+    background-color: var(--base-color);
+    border-radius: 4px;
+    padding : .25rem;
+    margin: .5rem auto .5rem;
 }
 
-.aside-contents{
-    background-color: var(--gray);
+/*サイドコンテンツ*/
+.aside-data-container{
+    width: 18rem;
+    align-self: flex-start;
+    min-width: 0;
+    flex-shrink: 1;
+    background-color: var(--main-color);
     border-radius: 8px;
     padding: 0.25rem 1rem 0.25rem 1rem;
     margin: .5rem 1rem 1rem 1rem;
     box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-aside h3{
-    gap: 0 0 1rem 0;
+.aside-contents{
+    background-color: var(--base-color);
+    border-radius: 4px;
+    padding : .25rem;
+    margin: .5rem auto .5rem;
 }
 
 /*フッター*/
 footer{
-    background-color: gray;
+    background-color: var(--main-color);
     padding: 8px 0 8px 0;
     height: 16vh;
 }
