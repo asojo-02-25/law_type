@@ -105,8 +105,8 @@ li{
     }
 
     form{
-        text-align: center;
         line-height: 1.75;
+        text-align: center;
     }
 
     .form-flex{
@@ -119,6 +119,37 @@ li{
         margin: 0 0 1rem 0;
     }
 
+    input[type="radio"]{
+        appearance: none;
+        -webkit-appearance: none;
+    }
+    
+    input[type="radio"] + label{
+        display: inline-block;
+        width: 100%;
+        padding: 0 0.25rem 0 0.25rem;
+    }
+    
+    input[type="radio"]:checked + label{
+        font-weight: bold;
+        border-color: var(--main-color);
+    }
+    
+    input[type="checkbox"]:checked + label{
+        font-weight: bold;
+    }
+
+    label{
+        cursor: pointer;
+        background-color: var(--base-color);
+        border: solid 1.5px var(--base-color);
+        border-radius: 2px;
+    }
+
+    label:hover{
+        font-weight: bold;
+    }
+    
     #start-button{
         font-size: 1rem;
         background-color: var(--accent-color-1);
@@ -294,7 +325,7 @@ li{
      
 
 /*注意書き*/
-.article-contents{
+article{
     width: 40rem;
     background-color: var(--main-color);
     border-radius: 8px;
@@ -302,9 +333,15 @@ li{
     margin: 1rem 1rem 1rem 1rem;
     box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
 }
+.article-contents{
+    background-color: var(--base-color);
+    border-radius: 4px;
+    padding : .25rem;
+    margin: .5rem auto .5rem;
+}
 
 /*サイドコンテンツ*/
-.aside-contents{
+.aside-data-container{
     width: 18rem;
     align-self: flex-start;
     min-width: 0;
@@ -319,7 +356,7 @@ li{
     text-overflow: ellipsis;
 }
 
-.aside-data-container{
+.aside-contents{
     background-color: var(--base-color);
     border-radius: 4px;
     padding : .25rem;

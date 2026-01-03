@@ -54,10 +54,10 @@
                                 <input type="radio" name="itemcounts" value="50" id="fifty"><label for="fifty">50問</label></input></br>
                                 <input type="radio" name="itemcounts" value="100" id="one-hundred"><label for="one-hundred">100問</label></input></br>
                             </div>
-                            <div>
-                                <p class="font-black">各種設定</p>
+                            <div class="left">
+                                <p class="font-black center">各種設定</p>
+                                <input type="checkbox" name="setting" value="keyboard-represent" id="keyboard" checked><label for="keyboard">キーボード表示</label></br>
                                 <input type="checkbox" name="setting" value="roman-letters-represent" id="Roman-letters"><label for="Roman-letters">ローマ字表示</label></br>
-                                <input type="checkbox" name="setting" value="keyboard-represent" id="keyboard"><label for="keyboard">キーボード表示</label></br>
                             </div>
                         </div>
                         <div>
@@ -148,21 +148,21 @@
                 <section class="typing-contents" id="results-screen">
                     <p>結果</p>
                 </section>
-                <div class="article-contents">
+                <article>
                     <h1 class="center">プレイデータの保持</h1>
-                    <p>
+                    <p class="article-contents font-black">
                         当サイトのプレイデータは、お客様の「現在のPC・ブラウザ」内に保存されます(ログイン不要)。そのため、別のPCやブラウザでアクセスした場合や、ブラウザの履歴・データを削除した場合は、データが失われます。ご留意ください。
                     </p>
-                </div>
-                <div class="article-contents">
+                </article>
+                <article>
                     <h1 class="center">アップデート情報</h1>
-                    <p>このサイトはβ版です。</p>
-                </div>    
+                    <p class="article-contents font-black">このサイトはβ版です。</p>
+                </article>    
             </main>
 
-            <aside class="aside-contents">
+            <aside class="aside-data-container">
                 <h1 class="center">簡易データ</h1>
-                <div class="aside-data-container">
+                <div class="aside-contents">
                     <p class="font-black">総プレイ日数 : <span class="font-black"><!-- jsから後で挿入--></span></p>
                     <p class="font-black">連続プレイ日数 : <span class="font-black"><!-- jsから後で挿入--></span></p>
                     <p class="font-black">直近の平均スピード : <span class="font-black"><!-- jsから後で挿入--></span></p>
@@ -184,6 +184,5 @@
             </div>
             <p class="font-small center">&copy; 2025 law_type</p>
         </footer>
-
     </body>
 </html>
