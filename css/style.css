@@ -165,13 +165,10 @@ li{
     /*ゲーム画面*/
     .game-area{
         background-color: var(--font-black);
-        color: var(--font-white);
         border-radius: 4px;
-        margin: .5rem auto .5rem;
+        margin: .5rem .25rem .5rem .25rem;
         width: 37.5rem;
-        border: solid;
-        border-color: var(--font-white);
-        border-width: 1px
+        border: 1px solid var(--font-white);
     }
 
     /*question-areaヘッダー*/
@@ -227,7 +224,6 @@ li{
 
     #current-guide{
         text-align: center;
-        color: var(--font-white);
         padding: .5rem 2rem 0 2rem;
         min-height: 3.5rem;
     }
@@ -247,15 +243,12 @@ li{
         grid-template-columns:repeat(45, 1fr);
         gap: 2px;
         padding: 8px 16px 8px 16px;
-        height: auto;
+        height: 7.75rem;
     }
 
     .key{
-        color: var(--font-white);
         background-color: var(--font-black);
-        border-style: solid;
-        border-width: 1px;
-        border-color: var(--font-white);
+        border: 1px solid var(--font-white);
         border-radius: 4px;    
         display: flex;
         justify-content: center;
@@ -305,7 +298,25 @@ li{
     .key.active{
         background-color: var(--accent-color-1);
         color: var(--font-black);
-        font-weight: bold;
+        font-weight: bold;  
+    }
+
+    /*結果画面*/
+    .result-graph-area{
+        background-color: var(--font-black);
+        margin: .5rem .25rem .5rem .25rem;
+        width: 37.5rem;
+        height : 22rem;
+        border: 1px solid var(--font-white);
+        border-radius: 4px;
+    }
+
+    .result-data-area{
+        padding: 8px 16px 8px 16px;
+        height: 7.75rem;
+        width: 37.5rem;
+        border: 1px solid var(--font-white);
+        border-radius: 4px;
     }
 
     /*ゲーム中の画面切り替え*/
@@ -316,14 +327,15 @@ li{
     #game-screen{
         display: none;
         flex-direction: column;
-        justify-content: center; 
+        justify-content: center;
     }
-
+    
     #results-screen{
         display: none;
+        flex-direction: column;
+        justify-content: center;
     }
      
-
 /*注意書き*/
 article{
     width: 40rem;

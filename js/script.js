@@ -290,21 +290,22 @@ const showResults = (data) => {
         });
     }, 1000)
     
-    // setTimeout(() => {
-    //     gameScreen.style.display = 'none';
-    //     resultsScreen.style.display = 'flex';
+    setTimeout(() => {
+        gameScreen.style.display = 'none';
+        resultsScreen.style.display = 'flex';
+        console.log('リザルト画面を表示');
 
-    //     displayResultsData(data);
+        // displayResultsData(data);
 
-    //     resultsScreen.animate([
-    //         {opacity: 0},
-    //         {opacity: 1},
-    //     ],{
-    //         duration: 1000,
-    //         fill: 'forwards',
-    //     });
+        resultsScreen.animate([
+            {opacity: 0},
+            {opacity: 1},
+        ],{
+            duration: 1000,
+            fill: 'forwards',
+        });
 
-    // }, 2000);
+    }, 1500);
 
     
     // リトライボタンの設定
