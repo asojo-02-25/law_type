@@ -40,6 +40,9 @@ const inputElement = document.querySelector('#user-input');
 const guideElement = document.querySelector('#current-guide');
 const fieldElement = document.querySelector('#question-field');
 const sourceElement  = document.querySelector('#question-source'); 
+const questionArea = document.querySelector('.question-area');
+const answerArea = document.querySelector('.answer-area');
+const keys = document.querySelectorAll('.key');
 
 // --- 問題を格納する配列のインポート ---
 import {typingQuestions} from './question.js';
@@ -223,6 +226,7 @@ const finishGame = () => {
     });
 
     showResults(resultData);
+    console.log('shouresultsを実行');
 };
 
 // --- localStrageへの保存 ---
@@ -238,11 +242,70 @@ const saveToLocalStorage = (data) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
 };
 
+// 結果表示用の関数
+// const displayResultsData = (data) => {
+//     document.querySelector('#result-wpm').textContent = data.wpm;
+//     document.querySelector('#result-miss-count').textContent = data.missCount;
+// };
+
 // リザルト画面の表示
 const showResults = (data) => {
 
-    gameScreen.style.display = 'none';
-    resultsScreen.style.display = 'block';
+    setTimeout(() => {
+        questionArea.animate([
+            {height: '13rem', margin: '.5rem .25rem .5rem .25rem', opacity: 1},
+            {height: '0rem', margin: '0 .25rem 0 .25rem', opacity: 0},
+        ],{
+            duration: 400,
+            fill: 'forwards',
+            transformOrigin: 'top',
+        });
+
+        answerArea.animate([
+            {height: '7rem'},
+            {height: '22rem'},
+        ],{
+            duration: 400,
+            fill: 'forwards',
+            transformOrigin: 'bottom',
+        });
+
+        keys.forEach((key) => {
+            key.animate([
+                {opacity: 1, transform: 'scale(1)'},
+                {opacity: 0, transform: 'scale(0)'},
+            ],{
+                duration: 400,
+                fill: 'forwards',
+                easing: 'ease-in-out',
+            });
+        });
+
+        inputElement.animate([
+            {opacity: 1},
+            {opacity: 0},
+        ],{
+            duration: 200,
+            fill: 'forwards',
+        });
+    }, 1000)
+    
+    // setTimeout(() => {
+    //     gameScreen.style.display = 'none';
+    //     resultsScreen.style.display = 'flex';
+
+    //     displayResultsData(data);
+
+    //     resultsScreen.animate([
+    //         {opacity: 0},
+    //         {opacity: 1},
+    //     ],{
+    //         duration: 1000,
+    //         fill: 'forwards',
+    //     });
+
+    // }, 2000);
+
     
     // リトライボタンの設定
 };
@@ -350,6 +413,22 @@ const resetGame = () => {
             animation.cancel();
         });
     }
+
+    questionArea.getAnimations().forEach((animation) => {
+        animation.cancel();
+    });
+
+    answerArea.getAnimations().forEach((animation) => {
+        animation.cancel();
+    });
+    keys.forEach((key) => {
+        key.getAnimations().forEach((animation) => {
+            animation.cancel();
+        });
+    });
+    inputElement.getAnimations().forEach((animation) => {
+        animation.cancel();
+    });
 };
 
 // --- ゲーム進行中のキーダウンイベント ---

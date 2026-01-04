@@ -183,7 +183,7 @@ li{
 
     /* 分野（左側）：バッジ風のデザイン */
     .info-badge {
-        background-color: var(--main-color);
+        background-color: var(--accent-color-2);
         padding: .125rem .5rem;
         border-radius: 4px;
         font-weight: bold;
@@ -196,12 +196,12 @@ li{
     }
 
     .question-area{
-        height: 15rem;
+        height: 13rem;
         align-items: center;
     }
 
     .answer-area{
-        height: 8rem;
+        height: 7rem;
         display: flex;
         flex-direction: column;
         justify-content: center;
