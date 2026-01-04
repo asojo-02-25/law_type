@@ -99,7 +99,7 @@ li{
         height: 30.5rem;
         background-color: var(--main-color);
         border-radius: 8px;
-        padding: 0.25rem 1rem 0.75rem 1rem;
+        padding: 0.25rem 1rem 0.25rem 1rem;
         margin: .5rem 1rem .5rem 1rem;
         box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
     }
@@ -165,13 +165,10 @@ li{
     /*ゲーム画面*/
     .game-area{
         background-color: var(--font-black);
-        color: var(--font-white);
         border-radius: 4px;
-        margin: .5rem auto .5rem;
+        margin: .5rem .25rem .5rem .25rem;
         width: 37.5rem;
-        border: solid;
-        border-color: var(--font-white);
-        border-width: 1px
+        border: 1px solid var(--font-white);
     }
 
     /*question-areaヘッダー*/
@@ -183,7 +180,7 @@ li{
 
     /* 分野（左側）：バッジ風のデザイン */
     .info-badge {
-        background-color: var(--main-color);
+        background-color: var(--accent-color-2);
         padding: .125rem .5rem;
         border-radius: 4px;
         font-weight: bold;
@@ -196,7 +193,7 @@ li{
     }
 
     .question-area{
-        height: 15rem;
+        height: 12.5rem;
         align-items: center;
     }
 
@@ -227,7 +224,6 @@ li{
 
     #current-guide{
         text-align: center;
-        color: var(--font-white);
         padding: .5rem 2rem 0 2rem;
         min-height: 3.5rem;
     }
@@ -235,7 +231,7 @@ li{
     #user-input{
         text-align: center;
         color: var(--accent-color-3);
-        padding: 0 2rem .5rem 2rem;
+        padding: .25 2rem .25rem 2rem;
         min-height: 3.5rem;
         width: 100%;
         word-break: break-all;
@@ -247,15 +243,12 @@ li{
         grid-template-columns:repeat(45, 1fr);
         gap: 2px;
         padding: 8px 16px 8px 16px;
-        height: auto;
+        height: 7.75rem;
     }
 
     .key{
-        color: var(--font-white);
         background-color: var(--font-black);
-        border-style: solid;
-        border-width: 1px;
-        border-color: var(--font-white);
+        border: 1px solid var(--font-white);
         border-radius: 4px;    
         display: flex;
         justify-content: center;
@@ -305,7 +298,30 @@ li{
     .key.active{
         background-color: var(--accent-color-1);
         color: var(--font-black);
-        font-weight: bold;
+        font-weight: bold;  
+    }
+
+    /*結果画面*/
+    .result-graph-area{
+        background-color: var(--font-black);
+        margin: .5rem .25rem .5rem .25rem;
+        width: 37.5rem;
+        height : 21rem;
+        border: 1px solid var(--font-white);
+        border-radius: 4px;
+    }
+
+    .result-data-area{
+        background-color: var(--font-black);
+        margin: .5rem .25rem .5rem .25rem;
+        padding: 8px 16px 8px 16px;
+        height: 7.75rem;
+        width: 37.5rem;
+        border: 1px solid var(--font-white);
+        border-radius: 4px;
+    }
+    .stat-item{
+        opacity: 0;
     }
 
     /*ゲーム中の画面切り替え*/
@@ -316,14 +332,15 @@ li{
     #game-screen{
         display: none;
         flex-direction: column;
-        justify-content: center; 
+        justify-content: center;
     }
-
+    
     #results-screen{
         display: none;
+        flex-direction: column;
+        justify-content: center;
     }
      
-
 /*注意書き*/
 article{
     width: 40rem;
