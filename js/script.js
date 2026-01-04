@@ -43,6 +43,7 @@ const sourceElement  = document.querySelector('#question-source');
 const questionArea = document.querySelector('.question-area');
 const answerArea = document.querySelector('.answer-area');
 const keys = document.querySelectorAll('.key');
+const statItems = document.querySelectorAll('.stat-item');
 
 // --- 問題を格納する配列のインポート ---
 import {typingQuestions} from './question.js';
@@ -262,8 +263,8 @@ const showResults = (data) => {
         });
 
         answerArea.animate([
-            {height: '7rem'},
-            {height: '22rem'},
+            {height: '8rem'},
+            {height: '21rem'},
         ],{
             duration: 400,
             fill: 'forwards',
@@ -290,24 +291,25 @@ const showResults = (data) => {
         });
     }, 1000)
     
-    setTimeout(() => {
+    setTimeout(() => {    
         gameScreen.style.display = 'none';
         resultsScreen.style.display = 'flex';
         console.log('リザルト画面を表示');
 
         // displayResultsData(data);
 
-        resultsScreen.animate([
-            {opacity: 0},
-            {opacity: 1},
-        ],{
-            duration: 1000,
-            fill: 'forwards',
+        statItems.forEach((item) => {
+            item.animate([
+                {opacity: 0},
+                {opacity: 1},
+            ],{
+                duration: 500,
+                fill: 'forwards',
+                easeing: 'ease-in-out',
+            });
         });
-
     }, 1500);
 
-    
     // リトライボタンの設定
 };
 
@@ -406,29 +408,44 @@ const resetGame = () => {
 
     // アニメーションのリセット
     for(const screen of delayScreens){
-        // スタイルの不透明度とサイズを復元
-        screen.style.opacity = '0';
-        screen.style.transform = 'scale(0)';
         // アニメーションの解除
         screen.getAnimations().forEach((animation) => {
             animation.cancel();
         });
+        // スタイルをクリアしてCSSの初期状態に戻す
+        screen.style.opacity = '';
+        screen.style.transform = '';
     }
 
+    console.log('ゲームをリセットしました');
     questionArea.getAnimations().forEach((animation) => {
         animation.cancel();
     });
+    questionArea.style.height = '';
+    questionArea.style.margin = '';
+    questionArea.style.opacity = '';
 
     answerArea.getAnimations().forEach((animation) => {
         animation.cancel();
     });
+    answerArea.style.height = '';
+
     keys.forEach((key) => {
         key.getAnimations().forEach((animation) => {
             animation.cancel();
+            key.style.opacity = '';
         });
     });
     inputElement.getAnimations().forEach((animation) => {
         animation.cancel();
+    });
+    inputElement.style.opacity = '';
+
+    statItems.forEach((item) => {
+        item.getAnimations().forEach((animation) => {
+            animation.cancel();
+        });
+        item.style.opacity = '';
     });
 };
 
