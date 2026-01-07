@@ -11,6 +11,7 @@ let gameStartTime = 0;          // 開始タイムスタンプ
 let correctKeyCount = 0;        // 正解タイプ数
 let missedKeyCount = 0;           // ミスタイプ数
 let missedKeysMap = {};         // ミスタイプしたキーを格納するオブジェクト
+let isGameActive = false;       // ゲーム進行中フラグ
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
@@ -98,9 +99,6 @@ const setupQuestionData = () => {
 
 // --- タイプべきキーのハイライト ---
 const highlightNextChar = () => {
-    
-    if(!currentTargetRomaji) return;
-    
     // すでにactiveなキーのリセット
     const activeKeys = document.querySelectorAll('.key.active');
     activeKeys.forEach((keys) => {
@@ -129,12 +127,11 @@ const highlightMissedKey = (char) => {
     if(targetElement){
         const keyframes = [
             {backgroundColor: 'red', offset: 0},
-            {backgroundColor: 'black', offset: 1},
+            {backgroundColor: 'white', offset: 1},
         ];
         const options = {
             duration: 200,
             iterations: 2,
-            easing: 'ease-out',
         }
         targetElement.animate(keyframes, options);
     }
@@ -181,6 +178,7 @@ const updateQuestionDisplay = () => {
 
 // --- ゲーム終了時の処理 ---
 const finishGame = () => {
+    isGameActive = false;       // ゲーム終了フラグ
     // 終了タイムスタンプ
     const gameEndTime = Date.now();
     // 経過時間
@@ -329,6 +327,7 @@ const nextQuestion = () => {
 
 // --- ゲームスタート時の処理 ---
 const startGame = (config) => {
+    isGameActive = true;        // ゲーム開始フラグ
     guideElement.style.display = 'block';
     
     console.log("開始設定", config); // 設定の取得・反映確認
@@ -469,8 +468,7 @@ document.addEventListener('keydown', (event) => {
 
     //キー入力の判定処理
     // ゲーム中以外は無視
-    if(gameScreen.style.display === 'none')return;
-    if(!currentTargetRomaji && currentQuestionIndex >= questionQueue.length)return;
+    if(!isGameActive)return;
     // アルファベットor数字のみを受け付ける簡易フィルタ
     if(event.key.length === 1){
         const nextExpectedChar = currentTargetRomaji[inputBuffer.length];
