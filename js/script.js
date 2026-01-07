@@ -271,12 +271,12 @@ const showResults = (data) => {
 
         keys.forEach((key) => {
             key.animate([
-                {opacity: 1, transform: 'scale(1)'},
-                {opacity: 0, transform: 'scale(0)'},
+                {opacity: 1, offset: 0},
+                {opacity: 0.8, offset: 0.5},
+                {opacity: 0, offset: 1}
             ],{
                 duration: 400,
                 fill: 'forwards',
-                easing: 'ease-in-out',
             });
         });
 

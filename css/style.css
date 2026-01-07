@@ -261,6 +261,9 @@ li{
         border-radius: 6px;    
         display: flex;
         justify-content: center;
+        align-items: center;
+        box-shadow: 0 1px 0 rgba(0,0,0,0.20), 0 2px 4px rgba(0,0,0,0.08);
+        transition: background-color .15s ease, box-shadow .15s ease;
     }
 
     .key span{
@@ -313,7 +316,9 @@ li{
     }
     .key.active{
         background-color: var(--main-color);
-        font-weight: bold;  
+        font-weight: bold;
+        transform: translateY(1px);
+        box-shadow: 0 0 0 rgba(0,0,0,0);
     }
 
     /*結果画面*/
