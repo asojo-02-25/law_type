@@ -2,13 +2,14 @@
 
 /*共通部分*/
 :root{
-    --base-color: #e0e1dd;
-    --main-color: #1b263b;
-    --accent-color-1: #e5cf6e;
-    --accent-color-2: #415a77;
-    --accent-color-3: #778da9;
-    --font-white: #e0e1dd;
-    --font-black: #0d1b2a;
+    --base-color: #e9f1fd;
+    --base-color-2: #f8fafc;
+    --main-color: #2777f7;
+    --accent-color: #a855f7;
+    --accent-color-2: #8d8d94;
+    --font-gray: #5c5e64;
+    --font-black: #1f2937;
+    --font-white: #ffffff;
 
 }
 
@@ -18,7 +19,7 @@ html {
 }
 
 h1{
-    color: var(--font-white);
+    color: var(--font-black);
     font-size: 1.2rem;
     padding: 0.5rem 0 0.5rem 0;
 }
@@ -26,11 +27,11 @@ h1{
 p{
     font-size: 1rem;
     line-height: 2;
-    color: var(--font-white);
+    color: var(--font-gray);
 }
 
 span{
-    color: var(--font-white);
+    color: var(--font-gray);
 }
 
 a{
@@ -43,6 +44,14 @@ a{
 
 .font-black{
     color: var(--font-black);
+}
+
+.font-white{
+    color: var(--font-white);
+}
+
+.font-bold{
+    font-weight: bold;
 }
 
 .right{
@@ -71,7 +80,7 @@ li{
 .header-flex{
     display: flex;
     justify-content: space-between; 
-    background-color: var(--main-color);
+    background-color: var(--base-color-2);
     height: 2.25rem;
     align-items: center;
     font-size: 1rem;
@@ -97,11 +106,11 @@ li{
     .typing-contents{
         width: 40rem;
         height: 30.5rem;
-        background-color: var(--main-color);
-        border-radius: 8px;
+        background-color: var(--base-color-2);
+        border-radius: 16px;
         padding: 0.25rem 1rem 0.25rem 1rem;
         margin: .5rem 1rem .5rem 1rem;
-        box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
+        box-shadow: 0 0 .5rem rgba(0,0,0,0.1), 0 0 1.5rem rgba(0,0,0,0.05);
     }
 
     form{
@@ -114,7 +123,7 @@ li{
         justify-content: center;
         gap: 2rem;
         background-color: var(--base-color);
-        border-radius: 4px;
+        border-radius: 8px;
         padding: 1rem 0 1rem 0;
         margin: 0 0 1rem 0;
     }
@@ -132,7 +141,7 @@ li{
     
     input[type="radio"]:checked + label{
         font-weight: bold;
-        border-color: var(--main-color);
+        border-color: var(--base-color-2);
     }
     
     input[type="checkbox"]:checked + label{
@@ -143,7 +152,7 @@ li{
         cursor: pointer;
         background-color: var(--base-color);
         border: solid 1.5px var(--base-color);
-        border-radius: 2px;
+        border-radius: 4px;
     }
 
     label:hover{
@@ -152,10 +161,11 @@ li{
     
     #start-button{
         font-size: 1rem;
-        background-color: var(--accent-color-1);
-        border-radius: 4px;
+        background-color: var(--main-color);
+        border-radius: 8px;
         padding: 0.5rem 2rem 0.5rem 2rem;
         cursor: pointer;
+        box-shadow: 0 0 .5rem rgba(0,0,0,0.1), 0 0 1.5rem rgba(0,0,0,0.05);
     }
 
     #start-button:hover{
@@ -164,11 +174,11 @@ li{
     
     /*ゲーム画面*/
     .game-area{
-        background-color: var(--font-black);
-        border-radius: 4px;
+        background-color: var(--base-color);
+        border-radius: 8px;
         margin: .5rem .25rem .5rem .25rem;
         width: 37.5rem;
-        border: 1px solid var(--font-white);
+        ;
     }
 
     /*question-areaヘッダー*/
@@ -180,9 +190,9 @@ li{
 
     /* 分野（左側）：バッジ風のデザイン */
     .info-badge {
-        background-color: var(--accent-color-2);
+        background-color: var(--main-color);
         padding: .125rem .5rem;
-        border-radius: 4px;
+        border-radius: 8px;
         font-weight: bold;
     }
 
@@ -214,7 +224,7 @@ li{
     }
 
     .current{
-        color: var(--accent-color-1);
+        color: var(--accent-color);
         font-weight: bold;
     }
 
@@ -230,7 +240,6 @@ li{
 
     #user-input{
         text-align: center;
-        color: var(--accent-color-3);
         padding: .25 2rem .25rem 2rem;
         min-height: 3.5rem;
         width: 100%;
@@ -247,11 +256,21 @@ li{
     }
 
     .key{
-        background-color: var(--font-black);
-        border: 1px solid var(--font-white);
-        border-radius: 4px;    
+        background-color: var(--accent-color-2);
+        /* border: 1px solid var(--font-gray); */
+        border-radius: 6px;    
         display: flex;
         justify-content: center;
+        align-items: center;
+        box-shadow: 0 1px 0 rgba(0,0,0,0.20), 0 2px 4px rgba(0,0,0,0.08);
+        transition: background-color .15s ease, box-shadow .15s ease;
+    }
+
+    .key span{
+        align-self: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: var(--font-white);
     }
     
     .key.normal{
@@ -276,7 +295,7 @@ li{
 
     .key.enter-top{
         grid-column: 41 / 46;
-        border-radius: 4px 4px 0 4px;
+        border-radius: 6px 6px 0 6px;
         position: relative;
         z-index: 1;
     }
@@ -286,7 +305,7 @@ li{
         height: 28px;
         border-top: none;
         margin-top: -3px;
-        border-radius: 0 0 4px 4px;
+        border-radius: 0 0 6px 6px;
         position: relative; 
         z-index: 2;
         align-items: top;
@@ -296,29 +315,28 @@ li{
         transform: translateY(-12px);
     }
     .key.active{
-        background-color: var(--accent-color-1);
-        color: var(--font-black);
-        font-weight: bold;  
+        background-color: var(--main-color);
+        font-weight: bold;
+        transform: translateY(1px);
+        box-shadow: 0 0 0 rgba(0,0,0,0);
     }
 
     /*結果画面*/
     .result-graph-area{
-        background-color: var(--font-black);
+        background-color: var(--base-color);
         margin: .5rem .25rem .5rem .25rem;
         width: 37.5rem;
         height : 21rem;
-        border: 1px solid var(--font-white);
-        border-radius: 4px;
+        border-radius: 8px;
     }
 
     .result-data-area{
-        background-color: var(--font-black);
+        background-color: var(--base-color);
         margin: .5rem .25rem .5rem .25rem;
         padding: 8px 16px 8px 16px;
         height: 7.75rem;
         width: 37.5rem;
-        border: 1px solid var(--font-white);
-        border-radius: 4px;
+        border-radius: 8px;
     }
     .stat-item{
         opacity: 0;
@@ -344,15 +362,13 @@ li{
 /*注意書き*/
 article{
     width: 40rem;
-    background-color: var(--main-color);
-    border-radius: 8px;
+    background-color: var(--base-color-2);
+    border-radius: 16px;
     padding: 0.25rem 1rem 0.25rem 1rem;
     margin: 1rem 1rem 1rem 1rem;
-    box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
+    box-shadow: 0 0 .5rem rgba(0,0,0,0.1), 0 0 1.5rem rgba(0,0,0,0.05);
 }
 .article-contents{
-    background-color: var(--base-color);
-    border-radius: 4px;
     padding : .25rem;
     margin: .5rem auto .5rem;
 }
@@ -363,26 +379,25 @@ article{
     align-self: flex-start;
     min-width: 0;
     flex-shrink: 1;
-    background-color: var(--main-color);
-    border-radius: 8px;
+    background-color: var(--base-color-2);
+    border-radius: 16px;
     padding: 0.25rem 1rem 0.25rem 1rem;
     margin: .5rem 1rem 1rem 1rem;
-    box-shadow: 0 0 .75rem rgba(0,0,0,0.5);
+    box-shadow: 0 0 .5rem rgba(0,0,0,0.1), 0 0 1.5rem rgba(0,0,0,0.05);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .aside-contents{
-    background-color: var(--base-color);
-    border-radius: 4px;
+    border-radius: 8px;
     padding : .25rem;
     margin: .5rem auto .5rem;
 }
 
 /*フッター*/
 footer{
-    background-color: var(--main-color);
+    background-color: var(--base-color-2);
     padding: 8px 0 8px 0;
     height: 16vh;
 }
