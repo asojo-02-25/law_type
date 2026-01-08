@@ -186,7 +186,7 @@ const finishGame = () => {
     const durationSec = (gameEndTime - gameStartTime) / 1000;
 
     // wpm の計算 (5文字 / 単語)
-    const wpm = durationSec > 0 ? Math.round((correctKeyCount / (durationSec * 5)) * 60) : 0;
+    const wpm = durationSec > 0 ? ((correctKeyCount / (durationSec * 5)) * 60).toFixed(1) : 0.0;
     // 正答率の計算
     const totalInputs = correctKeyCount + missedKeyCount;
     const accuracy = totalInputs > 0 ? (correctKeyCount / totalInputs).toFixed(1) : 100;
@@ -267,8 +267,17 @@ const drawResultChart = () => {
     const recentHistory = history.slice(-20);
 
     // データセットの作成
-    const labels = recentHistory.map((_, index) => index + 1);
+    const labels = recentHistory.map(item => {
+        const date = new Date(item.date);
+
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+        return `${month}/${day} ${hour}:${minute}`
+    });
     const dataPoints = recentHistory.map((item) => item.wpm);
+    
     // チャートの作成
     if(resultChartInstance){
         resultChartInstance.destroy();
@@ -279,7 +288,7 @@ const drawResultChart = () => {
         data: {
             labels : labels,
             datasets: [{
-                label: 'wpm推移',
+                label: 'wpm',
                 data: dataPoints,
                 borderColor: '#2777f7',
                 backgroundColor: 'rgba(39,119,247,0.1)',
@@ -293,6 +302,11 @@ const drawResultChart = () => {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout:{
+                padding: {
+                    top: 28,
+                }
+            },
             scales: {
                 y: {
                     beginAtZero: true,
@@ -306,8 +320,39 @@ const drawResultChart = () => {
             },
             plugins: {
                 legend: { display: false},
+                tooltip: {
+                    displayColors : false,
+                    backgroundColor: '#5c5e64',
+                    padding: 8,
+                    callbacks: {
+                        title: (tooltipItems) => {
+                            return 'プレイ日時 : ' + tooltipItems[0].label;
+                        },
+                        label: (context) => {
+                            return '記録 : ' + Number(context.raw).toFixed(1) + ' (word per minute)';
+                        },
+                    }
+                }
             },
-        }
+        },
+        // y軸上部に [wpm] を表示 
+        plugins: [{
+            id: 'yAxisUnit',
+            afterDraw: (chart) => {
+                const {ctx, scales: {y}} = chart;
+                ctx.save();
+                ctx.font = 'normal .75rem sans-serif';
+                ctx.fillStyle = '#5c5e64';
+                ctx.textAlign = 'left';
+
+                // 描画位置の計算
+                const xPos = y.left;
+                const yPos = y.top - 16;
+
+                ctx.fillText('[wpm]', xPos, yPos);
+                ctx.restore();
+            }
+        }]
     })
 };
 
