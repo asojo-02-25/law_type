@@ -219,13 +219,12 @@ li{
     }
 
     .completed{
-        color: var(--base-color);
+        color: var(--font-gray);
         opacity: 0.5;
     }
 
     .current{
         color: var(--accent-color);
-        font-weight: bold;
     }
 
     #question-text{
@@ -328,6 +327,16 @@ li{
         width: 37.5rem;
         height : 21rem;
         border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .result-graph-wrapper{
+        flex: 1;
+        min-height: 0;
+        position: relative;
+        width: 100%;
+        padding: .5rem 1rem .5rem 1rem;
     }
 
     .result-data-area{

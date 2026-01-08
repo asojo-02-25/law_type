@@ -4,14 +4,15 @@ let questionQueue = [];         // 実際に出題される問題のリスト
 let currentQuestionIndex = 0;   // 今何問目か
 let chunkedText = [];           // 日本語を読点で区切ったリスト
 let chunkedRomaji = [];         // ローマ字をカンマで区切ったリスト
-let currentChunkIndex = 0;       // 今何個目の文節を打っているか
+let currentChunkIndex = 0;      // 今何個目の文節を打っているか
 let currentTargetRomaji = '';   // 今打つべきローマ字の文節
 let inputBuffer = '';           // ユーザーが打っている正誤未確定の文節
 let gameStartTime = 0;          // 開始タイムスタンプ
 let correctKeyCount = 0;        // 正解タイプ数
-let missedKeyCount = 0;           // ミスタイプ数
+let missedKeyCount = 0;         // ミスタイプ数
 let missedKeysMap = {};         // ミスタイプしたキーを格納するオブジェクト
 let isGameActive = false;       // ゲーム進行中フラグ
+let resultChartInstance = null; // 結果チャートのインスタンス保持用
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
@@ -105,11 +106,11 @@ const highlightNextChar = () => {
         keys.classList.remove('active');
     });
 
-    // --- html要素の取得 ---
+    // html要素の取得
     const nextChar = currentTargetRomaji[inputBuffer.length];
     if(!nextChar) return;
     
-    // --- Id の取得 / ターゲット文字のハイライト --- 
+    // Id の取得 / ターゲット文字のハイライト 
     const targetId = keyIdMap[nextChar] || nextChar.toUpperCase();
     const targetElement = document.getElementById(targetId);
     if(targetElement){
@@ -225,7 +226,7 @@ const finishGame = () => {
     });
 
     showResults(resultData);
-    console.log('shouresultsを実行');
+    console.log('showresultsを実行');
 };
 
 // --- localStrageへの保存 ---
@@ -236,6 +237,7 @@ const saveToLocalStorage = (data) => {
         history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     }catch(error){
         console.error('storage parse error', error);
+        history = [];
     }
     history.push(data);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
@@ -246,6 +248,68 @@ const saveToLocalStorage = (data) => {
 //     document.querySelector('#result-wpm').textContent = data.wpm;
 //     document.querySelector('#result-miss-count').textContent = data.missCount;
 // };
+
+// --- 結果画面にグラフ描画 ---
+const drawResultChart = () => {
+    const ctx = document.getElementById('result-chart').getContext('2d');
+
+    // ローカルストレージからデータを取得
+    const STORAGE_KEY = 'law_type_play_data';
+    let history = [];
+    try{
+        history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    }catch(error){
+        console.error('storage parse error', error);
+        history = [];
+    }
+
+    // 直近10回のデータを取得
+    const recentHistory = history.slice(-20);
+
+    // データセットの作成
+    const labels = recentHistory.map((_, index) => index + 1);
+    const dataPoints = recentHistory.map((item) => item.wpm);
+    // チャートの作成
+    if(resultChartInstance){
+        resultChartInstance.destroy();
+    }
+
+    resultChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels : labels,
+            datasets: [{
+                label: 'wpm推移',
+                data: dataPoints,
+                borderColor: '#2777f7',
+                backgroundColor: 'rgba(39,119,247,0.1)',
+                borderWidth: 2,
+                tension: 0,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#2777f7',
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    suggestedMax: Math.max(...dataPoints, 0) +20,
+                    grid: { color: "#e9f1fd"},
+                },
+                x: {
+                    grid: { display: false},
+                    ticks: {display: false},
+                }
+            },
+            plugins: {
+                legend: { display: false},
+            },
+        }
+    })
+};
 
 // リザルト画面の表示
 const showResults = (data) => {
@@ -295,6 +359,7 @@ const showResults = (data) => {
         console.log('リザルト画面を表示');
 
         // displayResultsData(data);
+        drawResultChart();
 
         statItems.forEach((item) => {
             item.animate([
@@ -303,7 +368,7 @@ const showResults = (data) => {
             ],{
                 duration: 500,
                 fill: 'forwards',
-                easeing: 'ease-in-out',
+                easing: 'ease-in-out',
             });
         });
     }, 1500);
