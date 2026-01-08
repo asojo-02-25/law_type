@@ -123,7 +123,7 @@ li{
         justify-content: center;
         gap: 2rem;
         background-color: var(--base-color);
-        border-radius: 8px;
+        border-radius: 12px;
         padding: 1rem 0 1rem 0;
         margin: 0 0 1rem 0;
     }
@@ -175,7 +175,7 @@ li{
     /*ゲーム画面*/
     .game-area{
         background-color: var(--base-color);
-        border-radius: 8px;
+        border-radius: 12px;
         margin: .5rem .25rem .5rem .25rem;
         width: 37.5rem;
         ;
@@ -326,7 +326,7 @@ li{
         margin: .5rem .25rem .5rem .25rem;
         width: 37.5rem;
         height : 21rem;
-        border-radius: 8px;
+        border-radius: 12px;
         display: flex;
         flex-direction: column;
     }

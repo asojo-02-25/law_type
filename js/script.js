@@ -189,7 +189,7 @@ const finishGame = () => {
     const wpm = durationSec > 0 ? ((correctKeyCount / (durationSec * 5)) * 60).toFixed(1) : 0.0;
     // 正答率の計算
     const totalInputs = correctKeyCount + missedKeyCount;
-    const accuracy = totalInputs > 0 ? (correctKeyCount / totalInputs).toFixed(1) : 100;
+    const accuracy = totalInputs > 0 ? ((correctKeyCount / totalInputs) *100).toFixed(1) : 100;
 
     // 苦手キーの特定
     let weakKeysList = [];
@@ -263,8 +263,8 @@ const drawResultChart = () => {
         history = [];
     }
 
-    // 直近10回のデータを取得
-    const recentHistory = history.slice(-20);
+    // 直近15回のデータを取得
+    const recentHistory = history.slice(-15);
 
     // データセットの作成
     const labels = recentHistory.map(item => {
@@ -276,7 +276,8 @@ const drawResultChart = () => {
         const minute = String(date.getMinutes()).padStart(2, '0');
         return `${month}/${day} ${hour}:${minute}`
     });
-    const dataPoints = recentHistory.map((item) => item.wpm);
+    const wpmData = recentHistory.map((item) => item.wpm);
+    const accuracyData = recentHistory.map((item) => item.accuracy);
     
     // チャートの作成
     if(resultChartInstance){
@@ -287,41 +288,92 @@ const drawResultChart = () => {
         type: 'line',
         data: {
             labels : labels,
-            datasets: [{
-                label: 'wpm',
-                data: dataPoints,
-                borderColor: '#2777f7',
-                backgroundColor: 'rgba(39,119,247,0.1)',
-                borderWidth: 2,
-                tension: 0,
-                pointBackgroundColor: '#ffffff',
-                pointBorderColor: '#2777f7',
-                fill: true,
-            }]
+            datasets: [
+                {
+                    // wpmデータセット
+                    label: '   wpm   ',
+                    data: wpmData,
+                    borderColor: '#2777f7',
+                    backgroundColor: 'rgba(39,119,247,0.1)',
+                    borderWidth: 2,
+                    tension: 0,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#2777f7',
+                    fill: true,
+                    yAxisID: 'y',
+                    order: 1,
+                },{
+                    // accuracyデータセット
+                    label: '   正タイプ率   ',
+                    data: accuracyData,
+                    borderColor: '#ff9f40',
+                    borderWidth: 2,
+                    borderDash: [5,5],
+                    tension: 0,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#ff9f40',
+                    fill: false,
+                    yAxisID: 'y1',
+                    order: 0,
+                    clip: false,
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             layout:{
                 padding: {
-                    top: 28,
+                    top: 8,
                 }
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false,
             },
             scales: {
                 y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
                     beginAtZero: true,
-                    suggestedMax: Math.max(...dataPoints, 0) +20,
+                    suggestedMax: Math.max(...wpmData, 0) +20,
                     grid: { color: "#e9f1fd"},
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    min: 0,
+                    max: 100,
+                    grid: { display: false },
                 },
                 x: {
                     grid: { display: false},
-                    ticks: {display: false},
+                    ticks: { display: false },
                 }
             },
             plugins: {
-                legend: { display: false},
+                legend: {
+                    display: true,
+                    labels: {
+                        usePointStyle: true,
+                        font: {
+                            size: 10,
+                        },
+                        boxWidth: 2,
+                        padding: 8,
+                        generateLabels: (chart) => {
+                            const items = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                            items.forEach((item) => {
+                                item.lineWidth  = 1;
+                            });
+                            return items;
+                        },
+                    }
+                },
                 tooltip: {
-                    displayColors : false,
+                    displayColors : true,
                     backgroundColor: '#5c5e64',
                     padding: 8,
                     callbacks: {
@@ -329,7 +381,12 @@ const drawResultChart = () => {
                             return 'プレイ日時 : ' + tooltipItems[0].label;
                         },
                         label: (context) => {
-                            return '記録 : ' + Number(context.raw).toFixed(1) + ' (word per minute)';
+                            // wpm か accuracy かで表示する単位を変更
+                            if(context.dataset.label === 'wpm'){
+                                return ' 正タイプ率 : ' + Number(context.raw).toFixed(1) + ' (word per minute)';
+                            } else if(context.dataset.label === '正タイプ率'){
+                                return 'タイピング速度 : ' + Number(context.raw).toFixed(1) + ' %';
+                            }
                         },
                     }
                 }
@@ -341,7 +398,7 @@ const drawResultChart = () => {
             afterDraw: (chart) => {
                 const {ctx, scales: {y}} = chart;
                 ctx.save();
-                ctx.font = 'normal .75rem sans-serif';
+                ctx.font = 'normal 12px sans-serif';
                 ctx.fillStyle = '#5c5e64';
                 ctx.textAlign = 'left';
 
@@ -351,6 +408,19 @@ const drawResultChart = () => {
 
                 ctx.fillText('[wpm]', xPos, yPos);
                 ctx.restore();
+            }
+        },{
+            // 凡例とグラフの間隔を少し広げる
+            id: 'legendMargin',
+            beforeInit(chart){
+                const legend = chart.legend;
+                if(!legend || !legend.fit) return;
+                const originalFit = legend.fit;
+                legend.fit = function fit(){
+                    originalFit.call(this);
+                    // 凡例の高さを増やすことで下側に余白を追加
+                    this.height += 8;
+                }
             }
         }]
     })
