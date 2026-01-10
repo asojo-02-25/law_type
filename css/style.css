@@ -169,7 +169,7 @@ li{
     }
 
     #start-button:hover{
-        font-weight: bold;
+        background-color: #1a60d6;
     }
     
     /*ゲーム画面*/

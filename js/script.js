@@ -138,6 +138,71 @@ const highlightMissedKey = (char) => {
     }
 };
 
+// リザルト画面の表示
+const showResults = (data) => {
+
+    setTimeout(() => {
+        questionArea.animate([
+            {height: '13rem', margin: '.5rem .25rem .5rem .25rem', opacity: 1},
+            {height: '0rem', margin: '0 .25rem 0 .25rem', opacity: 0},
+        ],{
+            duration: 400,
+            fill: 'forwards',
+            transformOrigin: 'top',
+        });
+
+        answerArea.animate([
+            {height: '8rem'},
+            {height: '21rem'},
+        ],{
+            duration: 400,
+            fill: 'forwards',
+            transformOrigin: 'bottom',
+        });
+
+        keys.forEach((key) => {
+            key.animate([
+                {opacity: 1, offset: 0},
+                {opacity: 0.8, offset: 0.5},
+                {opacity: 0, offset: 1}
+            ],{
+                duration: 400,
+                fill: 'forwards',
+            });
+        });
+
+        inputElement.animate([
+            {opacity: 1},
+            {opacity: 0},
+        ],{
+            duration: 200,
+            fill: 'forwards',
+        });
+    }, 1000)
+    
+    setTimeout(() => {    
+        gameScreen.style.display = 'none';
+        resultsScreen.style.display = 'flex';
+        console.log('リザルト画面を表示');
+
+        // displayResultsData(data);
+        drawResultChart();
+
+        statItems.forEach((item) => {
+            item.animate([
+                {opacity: 0},
+                {opacity: 1},
+            ],{
+                duration: 500,
+                fill: 'forwards',
+                easing: 'ease-in-out',
+            });
+        });
+    }, 1500);
+
+    // リトライボタンの設定  
+};
+
 // --- 画面表示の更新 ---
 const updateQuestionDisplay = () => {
 
@@ -396,17 +461,25 @@ const drawResultChart = () => {
         plugins: [{
             id: 'yAxisUnit',
             afterDraw: (chart) => {
-                const {ctx, scales: {y}} = chart;
+
+                // 左軸と右軸を取得
+                const {ctx, scales: {y, y1}} = chart;
                 ctx.save();
                 ctx.font = 'normal 12px sans-serif';
                 ctx.fillStyle = '#5c5e64';
                 ctx.textAlign = 'left';
 
-                // 描画位置の計算
-                const xPos = y.left;
+                // 描画位置
                 const yPos = y.top - 16;
 
-                ctx.fillText('[wpm]', xPos, yPos);
+                // 左軸 wpm
+                ctx.textAlign = 'left';
+                ctx.fillText('[wpm]', y.left, yPos);
+
+                // 右軸 accuracy
+                ctx.textAlign = 'right';
+                ctx.fillText('[%]', y1.right, yPos);
+
                 ctx.restore();
             }
         },{
@@ -424,71 +497,6 @@ const drawResultChart = () => {
             }
         }]
     })
-};
-
-// リザルト画面の表示
-const showResults = (data) => {
-
-    setTimeout(() => {
-        questionArea.animate([
-            {height: '13rem', margin: '.5rem .25rem .5rem .25rem', opacity: 1},
-            {height: '0rem', margin: '0 .25rem 0 .25rem', opacity: 0},
-        ],{
-            duration: 400,
-            fill: 'forwards',
-            transformOrigin: 'top',
-        });
-
-        answerArea.animate([
-            {height: '8rem'},
-            {height: '21rem'},
-        ],{
-            duration: 400,
-            fill: 'forwards',
-            transformOrigin: 'bottom',
-        });
-
-        keys.forEach((key) => {
-            key.animate([
-                {opacity: 1, offset: 0},
-                {opacity: 0.8, offset: 0.5},
-                {opacity: 0, offset: 1}
-            ],{
-                duration: 400,
-                fill: 'forwards',
-            });
-        });
-
-        inputElement.animate([
-            {opacity: 1},
-            {opacity: 0},
-        ],{
-            duration: 200,
-            fill: 'forwards',
-        });
-    }, 1000)
-    
-    setTimeout(() => {    
-        gameScreen.style.display = 'none';
-        resultsScreen.style.display = 'flex';
-        console.log('リザルト画面を表示');
-
-        // displayResultsData(data);
-        drawResultChart();
-
-        statItems.forEach((item) => {
-            item.animate([
-                {opacity: 0},
-                {opacity: 1},
-            ],{
-                duration: 500,
-                fill: 'forwards',
-                easing: 'ease-in-out',
-            });
-        });
-    }, 1500);
-
-    // リトライボタンの設定
 };
 
 // --- 次の問題に進む準備 ---
@@ -646,7 +654,7 @@ document.addEventListener('keydown', (event) => {
         resetGame();
     }
 
-    //キー入力の判定処理
+    // キー入力の判定処理
     // ゲーム中以外は無視
     if(!isGameActive)return;
     // アルファベットor数字のみを受け付ける簡易フィルタ
