@@ -56,6 +56,17 @@ const statItems = document.querySelectorAll('.stat-item');
 import {typingQuestions} from './question.js';
 
 // ====================================
+// ページロード時の初期化
+// ====================================
+
+// ページ読み込み時に画面状態をリセット
+window.addEventListener('load', () => {
+    startScreen.style.display = 'block';
+    gameScreen.style.display = 'none';
+    resultsScreen.style.display = 'none';
+});
+
+// ====================================
 // 補助関数
 // ====================================
 
@@ -718,3 +729,88 @@ document.addEventListener('keydown', (event) => {
         updateQuestionDisplay();
     }
 });
+
+// --- ヘッダーのリンク処理 ---
+const navActions = {
+    'nav-home-link': () => {
+        startScreen.style.display = 'block';
+        gameScreen.style.display = 'none';
+        resultsScreen.style.display = 'none';
+    },
+    'nav-results-link': () => {
+        startScreen.style.display = 'none';
+        gameScreen.style.display = 'none';
+        resultsScreen.style.display = 'flex';
+        drawResultChart();
+        statItems.forEach((item) => {
+            item.style.opacity = 1;
+        });
+    }
+    // 'nav-setting-link': () => {
+    //     // window.location.href = 'setting.html';
+    // };
+}
+
+document.querySelector('.nav').addEventListener('click', (event) => {
+    const link = event.target.closest('a[class^="nav-"]');
+    if(!link) return;
+
+    event.preventDefault();
+    if(isGameActive) return;
+
+    const action = navActions[link.className];
+    if(action) action();
+});
+
+// const homeLink = document.querySelector('.nav-home-link');
+// const resultsLink = document.querySelector('.nav-results-link');
+// const settingLink = document.querySelector('.nav-setting-link');
+
+
+// if(resultsLink){
+//     resultsLink.addEventListener('click', (event) => {
+//         event.preventDefault();
+//         // ゲーム中の場合は処理しない
+//         if(isGameActive) return;
+        
+//         // スタート画面を非表示にして、結果画面を表示
+//         startScreen.style.display = 'none';
+//         resultsScreen.style.display = 'flex';
+        
+//         // 結果画面にデータを表示
+//         drawResultChart();
+
+//         statItems.forEach((item) => {
+//             item.style.opacity = 1;
+//         });
+//     });
+// }
+
+// // --- ホームのリンク処理 ---
+
+// if(homeLink){
+//     homeLink.addEventListener('click', (event) => {
+//         event.preventDefault();
+//         // ゲーム中の場合は処理しない
+//         if(isGameActive) return;
+        
+//         // スタート画面を表示、他の画面を非表示
+//         startScreen.style.display = 'block';
+//         gameScreen.style.display = 'none';
+//         resultsScreen.style.display = 'none';
+//     });
+// }
+
+// // --- 設定のリンク処理 ---
+
+// if(settingLink){
+//     settingLink.addEventListener('click', (event) => {
+//         event.preventDefault();
+//         // ゲーム中の場合は処理しない
+//         if(isGameActive) return;
+        
+//         // 設定ページへ遷移
+//         window.location.href = 'setting.html';
+//     });
+// }
+
