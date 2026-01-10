@@ -123,7 +123,7 @@ li{
         justify-content: center;
         gap: 2rem;
         background-color: var(--base-color);
-        border-radius: 8px;
+        border-radius: 12px;
         padding: 1rem 0 1rem 0;
         margin: 0 0 1rem 0;
     }
@@ -169,13 +169,13 @@ li{
     }
 
     #start-button:hover{
-        font-weight: bold;
+        background-color: #1a60d6;
     }
     
     /*ゲーム画面*/
     .game-area{
         background-color: var(--base-color);
-        border-radius: 8px;
+        border-radius: 12px;
         margin: .5rem .25rem .5rem .25rem;
         width: 37.5rem;
         ;
@@ -219,13 +219,12 @@ li{
     }
 
     .completed{
-        color: var(--base-color);
+        color: var(--font-gray);
         opacity: 0.5;
     }
 
     .current{
         color: var(--accent-color);
-        font-weight: bold;
     }
 
     #question-text{
@@ -327,7 +326,17 @@ li{
         margin: .5rem .25rem .5rem .25rem;
         width: 37.5rem;
         height : 21rem;
-        border-radius: 8px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .result-graph-wrapper{
+        flex: 1;
+        min-height: 0;
+        position: relative;
+        width: 100%;
+        padding: 0 1rem .5rem 1rem;
     }
 
     .result-data-area{

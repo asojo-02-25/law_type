@@ -10,6 +10,7 @@
         <!--オリジナルcss-->
         <link rel="stylesheet" href="css/style.css">
         <!--js-->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
         <script type="module" src="js/script.js" defer></script>
         <!--google font-->
         <!--あとで-->
@@ -74,7 +75,7 @@
                             <p class="font-small font-bold">分野 : <span id="question-field" class="info-badge font-small font-white"></span></p>
                             <p class="font-small font-bold">出典 : <span id="question-source" class="info-text font-small"></span></p>
                         </div>
-                        <p id="question-text"></p>
+                        <p id="question-text" class="font-bold"></p>
                     </div>
                     <div class="game-area delay-screen answer-area">
                         <p id="current-guide"></p>
@@ -148,8 +149,9 @@
                 <section class="typing-contents" id="results-screen">
                     <div class="result-graph-area">
                         <h1 class="center">結果</h1>
-                        <!-- グラフ（元answer-area相当の位置・サイズ） -->
-                        <canvas id="result-chart"></canvas>
+                        <div class="result-graph-wrapper">
+                            <canvas id="result-chart"></canvas>
+                        </div>
                     </div>
                     <div class="result-data-area">
                         <!-- 数値データ（元keyboard-container相当） -->

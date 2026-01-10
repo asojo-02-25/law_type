@@ -4,14 +4,15 @@ let questionQueue = [];         // 実際に出題される問題のリスト
 let currentQuestionIndex = 0;   // 今何問目か
 let chunkedText = [];           // 日本語を読点で区切ったリスト
 let chunkedRomaji = [];         // ローマ字をカンマで区切ったリスト
-let currentChunkIndex = 0;       // 今何個目の文節を打っているか
+let currentChunkIndex = 0;      // 今何個目の文節を打っているか
 let currentTargetRomaji = '';   // 今打つべきローマ字の文節
 let inputBuffer = '';           // ユーザーが打っている正誤未確定の文節
 let gameStartTime = 0;          // 開始タイムスタンプ
 let correctKeyCount = 0;        // 正解タイプ数
-let missedKeyCount = 0;           // ミスタイプ数
+let missedKeyCount = 0;         // ミスタイプ数
 let missedKeysMap = {};         // ミスタイプしたキーを格納するオブジェクト
 let isGameActive = false;       // ゲーム進行中フラグ
+let resultChartInstance = null; // 結果チャートのインスタンス保持用
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
@@ -105,11 +106,11 @@ const highlightNextChar = () => {
         keys.classList.remove('active');
     });
 
-    // --- html要素の取得 ---
+    // html要素の取得
     const nextChar = currentTargetRomaji[inputBuffer.length];
     if(!nextChar) return;
     
-    // --- Id の取得 / ターゲット文字のハイライト --- 
+    // Id の取得 / ターゲット文字のハイライト 
     const targetId = keyIdMap[nextChar] || nextChar.toUpperCase();
     const targetElement = document.getElementById(targetId);
     if(targetElement){
@@ -135,6 +136,71 @@ const highlightMissedKey = (char) => {
         }
         targetElement.animate(keyframes, options);
     }
+};
+
+// リザルト画面の表示
+const showResults = (data) => {
+
+    setTimeout(() => {
+        questionArea.animate([
+            {height: '13rem', margin: '.5rem .25rem .5rem .25rem', opacity: 1},
+            {height: '0rem', margin: '0 .25rem 0 .25rem', opacity: 0},
+        ],{
+            duration: 400,
+            fill: 'forwards',
+            transformOrigin: 'top',
+        });
+
+        answerArea.animate([
+            {height: '8rem'},
+            {height: '21rem'},
+        ],{
+            duration: 400,
+            fill: 'forwards',
+            transformOrigin: 'bottom',
+        });
+
+        keys.forEach((key) => {
+            key.animate([
+                {opacity: 1, offset: 0},
+                {opacity: 0.8, offset: 0.5},
+                {opacity: 0, offset: 1}
+            ],{
+                duration: 400,
+                fill: 'forwards',
+            });
+        });
+
+        inputElement.animate([
+            {opacity: 1},
+            {opacity: 0},
+        ],{
+            duration: 200,
+            fill: 'forwards',
+        });
+    }, 1000)
+    
+    setTimeout(() => {    
+        gameScreen.style.display = 'none';
+        resultsScreen.style.display = 'flex';
+        console.log('リザルト画面を表示');
+
+        // displayResultsData(data);
+        drawResultChart();
+
+        statItems.forEach((item) => {
+            item.animate([
+                {opacity: 0},
+                {opacity: 1},
+            ],{
+                duration: 500,
+                fill: 'forwards',
+                easing: 'ease-in-out',
+            });
+        });
+    }, 1500);
+
+    // リトライボタンの設定  
 };
 
 // --- 画面表示の更新 ---
@@ -185,10 +251,10 @@ const finishGame = () => {
     const durationSec = (gameEndTime - gameStartTime) / 1000;
 
     // wpm の計算 (5文字 / 単語)
-    const wpm = durationSec > 0 ? Math.round((correctKeyCount / (durationSec * 5)) * 60) : 0;
+    const wpm = durationSec > 0 ? ((correctKeyCount / (durationSec * 5)) * 60).toFixed(1) : 0.0;
     // 正答率の計算
     const totalInputs = correctKeyCount + missedKeyCount;
-    const accuracy = totalInputs > 0 ? (correctKeyCount / totalInputs).toFixed(1) : 100;
+    const accuracy = totalInputs > 0 ? ((correctKeyCount / totalInputs) *100).toFixed(1) : 100;
 
     // 苦手キーの特定
     let weakKeysList = [];
@@ -225,7 +291,7 @@ const finishGame = () => {
     });
 
     showResults(resultData);
-    console.log('shouresultsを実行');
+    console.log('showresultsを実行');
 };
 
 // --- localStrageへの保存 ---
@@ -236,6 +302,7 @@ const saveToLocalStorage = (data) => {
         history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     }catch(error){
         console.error('storage parse error', error);
+        history = [];
     }
     history.push(data);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
@@ -247,68 +314,189 @@ const saveToLocalStorage = (data) => {
 //     document.querySelector('#result-miss-count').textContent = data.missCount;
 // };
 
-// リザルト画面の表示
-const showResults = (data) => {
+// --- 結果画面にグラフ描画 ---
+const drawResultChart = () => {
+    const ctx = document.getElementById('result-chart').getContext('2d');
 
-    setTimeout(() => {
-        questionArea.animate([
-            {height: '13rem', margin: '.5rem .25rem .5rem .25rem', opacity: 1},
-            {height: '0rem', margin: '0 .25rem 0 .25rem', opacity: 0},
-        ],{
-            duration: 400,
-            fill: 'forwards',
-            transformOrigin: 'top',
-        });
+    // ローカルストレージからデータを取得
+    const STORAGE_KEY = 'law_type_play_data';
+    let history = [];
+    try{
+        history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    }catch(error){
+        console.error('storage parse error', error);
+        history = [];
+    }
 
-        answerArea.animate([
-            {height: '8rem'},
-            {height: '21rem'},
-        ],{
-            duration: 400,
-            fill: 'forwards',
-            transformOrigin: 'bottom',
-        });
+    // 直近15回のデータを取得
+    const recentHistory = history.slice(-15);
 
-        keys.forEach((key) => {
-            key.animate([
-                {opacity: 1, offset: 0},
-                {opacity: 0.8, offset: 0.5},
-                {opacity: 0, offset: 1}
-            ],{
-                duration: 400,
-                fill: 'forwards',
-            });
-        });
+    // データセットの作成
+    const labels = recentHistory.map(item => {
+        const date = new Date(item.date);
 
-        inputElement.animate([
-            {opacity: 1},
-            {opacity: 0},
-        ],{
-            duration: 200,
-            fill: 'forwards',
-        });
-    }, 1000)
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+        return `${month}/${day} ${hour}:${minute}`
+    });
+    const wpmData = recentHistory.map((item) => item.wpm);
+    const accuracyData = recentHistory.map((item) => item.accuracy);
     
-    setTimeout(() => {    
-        gameScreen.style.display = 'none';
-        resultsScreen.style.display = 'flex';
-        console.log('リザルト画面を表示');
+    // チャートの作成
+    if(resultChartInstance){
+        resultChartInstance.destroy();
+    }
 
-        // displayResultsData(data);
+    resultChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels : labels,
+            datasets: [
+                {
+                    // wpmデータセット
+                    label: '   wpm   ',
+                    data: wpmData,
+                    borderColor: '#2777f7',
+                    backgroundColor: 'rgba(39,119,247,0.1)',
+                    borderWidth: 2,
+                    tension: 0,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#2777f7',
+                    fill: true,
+                    yAxisID: 'y',
+                    order: 1,
+                },{
+                    // accuracyデータセット
+                    label: '   正タイプ率   ',
+                    data: accuracyData,
+                    borderColor: '#ff9f40',
+                    borderWidth: 2,
+                    borderDash: [5,5],
+                    tension: 0,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#ff9f40',
+                    fill: false,
+                    yAxisID: 'y1',
+                    order: 0,
+                    clip: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout:{
+                padding: {
+                    top: 8,
+                }
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    beginAtZero: true,
+                    suggestedMax: Math.max(...wpmData, 0) +20,
+                    grid: { color: "#e9f1fd"},
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    min: 0,
+                    max: 100,
+                    grid: { display: false },
+                },
+                x: {
+                    grid: { display: false},
+                    ticks: { display: false },
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        usePointStyle: true,
+                        font: {
+                            size: 10,
+                        },
+                        boxWidth: 2,
+                        padding: 8,
+                        generateLabels: (chart) => {
+                            const items = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                            items.forEach((item) => {
+                                item.lineWidth  = 1;
+                            });
+                            return items;
+                        },
+                    }
+                },
+                tooltip: {
+                    displayColors : true,
+                    backgroundColor: '#5c5e64',
+                    padding: 8,
+                    callbacks: {
+                        title: (tooltipItems) => {
+                            return 'プレイ日時 : ' + tooltipItems[0].label;
+                        },
+                        label: (context) => {
+                            // wpm か accuracy かで表示する単位を変更
+                            if(context.dataset.label === 'wpm'){
+                                return ' 正タイプ率 : ' + Number(context.raw).toFixed(1) + ' (word per minute)';
+                            } else if(context.dataset.label === '正タイプ率'){
+                                return 'タイピング速度 : ' + Number(context.raw).toFixed(1) + ' %';
+                            }
+                        },
+                    }
+                }
+            },
+        },
+        // y軸上部に [wpm] を表示 
+        plugins: [{
+            id: 'yAxisUnit',
+            afterDraw: (chart) => {
 
-        statItems.forEach((item) => {
-            item.animate([
-                {opacity: 0},
-                {opacity: 1},
-            ],{
-                duration: 500,
-                fill: 'forwards',
-                easeing: 'ease-in-out',
-            });
-        });
-    }, 1500);
+                // 左軸と右軸を取得
+                const {ctx, scales: {y, y1}} = chart;
+                ctx.save();
+                ctx.font = 'normal 12px sans-serif';
+                ctx.fillStyle = '#5c5e64';
+                ctx.textAlign = 'left';
 
-    // リトライボタンの設定
+                // 描画位置
+                const yPos = y.top - 16;
+
+                // 左軸 wpm
+                ctx.textAlign = 'left';
+                ctx.fillText('[wpm]', y.left, yPos);
+
+                // 右軸 accuracy
+                ctx.textAlign = 'right';
+                ctx.fillText('[%]', y1.right, yPos);
+
+                ctx.restore();
+            }
+        },{
+            // 凡例とグラフの間隔を少し広げる
+            id: 'legendMargin',
+            beforeInit(chart){
+                const legend = chart.legend;
+                if(!legend || !legend.fit) return;
+                const originalFit = legend.fit;
+                legend.fit = function fit(){
+                    originalFit.call(this);
+                    // 凡例の高さを増やすことで下側に余白を追加
+                    this.height += 8;
+                }
+            }
+        }]
+    })
 };
 
 // --- 次の問題に進む準備 ---
@@ -466,7 +654,7 @@ document.addEventListener('keydown', (event) => {
         resetGame();
     }
 
-    //キー入力の判定処理
+    // キー入力の判定処理
     // ゲーム中以外は無視
     if(!isGameActive)return;
     // アルファベットor数字のみを受け付ける簡易フィルタ
