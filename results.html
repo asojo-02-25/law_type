@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>law_type - 司法試験特化型タイピング練習サイト</title>
+        <meta name="discriptiion" content="司法試験向けタイピング練習サイト">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!--リセットcss-->
+        <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+        <!--オリジナルcss-->
+        <link rel="stylesheet" href="css/style.css">
+        <!--js-->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+        <script type="module" src="js/script.js" defer></script>
+        <!--google font-->
+        <!--あとで-->
+        <!--ファビコン-->
+        <link rel="icon" type="image/png" href="images/favicon.png">
+    </head>
+
+    <body>
+        <div class="header-flex">
+            <header class="header">
+                <a href="index.html">
+                    <img src="images/header_icon.png" alt="ヘッダーアイコン" class="icon"><span>law_type - 司法試験特化型タイピング練習サイト</span>
+                </a>
+            </header>
+
+            <nav class="nav">
+                <ul class="nav-flex">
+                    <a href="index.html"><img src="images/header_icon.png" alt="home" class="icon"><span>ホーム</span></a>
+                    <a href="results.html"><img src="images/header_icon.png" alt="results" class="icon"><span>分析画面</span></a>
+                    <a href="setting.html"><img src="images/header_icon.png" alt="settings" class="icon"><span>設定</span></a> 
+                </ul>
+            </nav>
+        </div>
+
+        <div class="main-flex">
+            <main class="main-contents">
+                <!-- 結果画面 -->
+                <section class="typing-contents" id="results-screen">
+                    <div class="result-graph-area">
+                        <h1 class="center">結果</h1>
+                        <div class="result-graph-wrapper">
+                            <canvas id="result-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="result-data-area">
+                        <!-- 数値データ（元keyboard-container相当） -->
+                        <p class="stat-item">WPM: <span id="stat-wpm"></span></p>
+                        <p class="stat-item">正答率: <span id="stat-accuracy"></span></p>
+                    </div>
+                </section> 
+
+                <article>
+                    <h1 class="center">プレイデータの保持</h1>
+                    <p class="article-contents">
+                        当サイトのプレイデータは、お客様の「現在のPC・ブラウザ」内に保存されます(ログイン不要)。そのため、別のPCやブラウザでアクセスした場合や、ブラウザの履歴・データを削除した場合は、データが失われます。ご留意ください。
+                    </p>
+                </article>
+
+                <article>
+                    <h1 class="center">アップデート情報</h1>
+                    <p class="article-contents">このサイトはβ版です。</p>
+                </article>    
+            </main>
+
+            <aside class="aside-data-container">
+                <h1 class="center">簡易データ</h1>
+                <div class="aside-contents">
+                    <p>総プレイ日数 : <span><!-- jsから後で挿入--></span></p>
+                    <p>連続プレイ日数 : <span><!-- jsから後で挿入--></span></p>
+                    <p>直近の平均スピード : <span><!-- jsから後で挿入--></span></p>
+                    <p>次の司法試験まであと<span><!-- jsから後で挿入--></span>日</p>
+                </div>
+            </aside>            
+        </div>
+        
+        <footer>
+            <div class="footer-flex font-small center">
+                <a href="rule.html"><span>ご利用規約</span></a>
+                <a href="policy.html"><span>プライバシーポリシー</span></a>
+            </div>
+            
+            <div class="footer-flex">
+                <a href="https://github.com/asojo-02-25"><img src="images/header_icon.png" alt="githubプロフィール" class="icon"></a>
+                <a href="https://x.com/jo_integralis"><img src="images/header_icon.png" alt="Xプロフィール" class="icon"></a>
+                <a href="https://www.instagram.com/jo_integralis/"><img src="images/header_icon.png" alt="instagramプロフィール" class="icon"></a>
+            </div>
+            <p class="font-small center">&copy; 2025 law_type</p>
+        </footer>
+    </body>
+</html>
