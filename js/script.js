@@ -15,6 +15,7 @@ let missedKeyCount = 0;         // ミスタイプ数
 let missedKeysMap = {};         // ミスタイプしたキーを格納するオブジェクト
 let isGameActive = false;       // ゲーム進行中フラグ
 let resultChartInstance = null; // 結果チャートのインスタンス保持用
+let lastGameSettings = null;    // 直近プレイ設定を保持
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
@@ -96,13 +97,13 @@ const computeHistoryMetrics = (history) => {
     const wpms = history.map(h => Number(h.wpm));
     const maxWpm = Math.max(...wpms);
 
-    const recentN = Math.min(5, count);
+    const recentN = Math.min(15, count);
     const recentSlice = wpms.slice(-recentN);
     const recentAvgWpm = recentSlice.reduce((a, b) => a + b, 0) / recentSlice.length;
 
     const recentChange = count >= 1 ? (((wpms[count - 1] / recentAvgWpm) - 1) * 100) : 0;
 
-    const initialN = Math.min(5, count);
+    const initialN = Math.min(15, count);
     const initialAvgWpm = wpms.slice(0, initialN).reduce((a, b) => a + b, 0) / initialN;
     const initialChange = recentAvgWpm - initialAvgWpm;
 
@@ -127,7 +128,7 @@ const displayResultStats = (data) => {
     const recentAvgEl = document.getElementById('stat-recent-wpm-avg');
     const maxEl = document.getElementById('stat-wpm-max');
 
-    if (wpmEl) wpmEl.textContent = Number(data.wpm).toFixed(1);
+    if (wpmEl) wpmEl.textContent = Number(data.wpm).toFixed(2) + ' keys/秒';
     if (accEl) accEl.textContent = Number(data.accuracy).toFixed(1) + ' %';
     if (weakEl) weakEl.textContent = data.weakKey || '特になし';
 
@@ -142,8 +143,8 @@ const displayResultStats = (data) => {
         const sign = metrics.initialChange >= 0 ? '+ ' : '';
         initialrecentChangeEl.textContent = sign + metrics.initialChange.toFixed(1) + ' %';
     }
-    if (recentAvgEl) recentAvgEl.textContent = metrics.recentAvgWpm.toFixed(1);
-    if (maxEl) maxEl.textContent = metrics.maxWpm.toFixed(1);
+    if (recentAvgEl) recentAvgEl.textContent = metrics.recentAvgWpm.toFixed(2) + ' keys/秒';
+    if (maxEl) maxEl.textContent = metrics.maxWpm.toFixed(2) + ' keys/秒';
 };
 
 // ====================================
@@ -223,6 +224,8 @@ const saveToLocalStorage = (data) => {
 const startGame = (config) => {
     isGameActive = true;        // ゲーム開始フラグ
     guideElement.style.display = 'block';
+
+    lastGameSettings = JSON.parse(JSON.stringify(config));  // 直近の設定を保持
     
     console.log("開始設定", config); // 設定の取得・反映確認
 
@@ -386,8 +389,8 @@ const finishGame = () => {
     // 経過時間
     const durationSec = (gameEndTime - gameStartTime) / 1000;
 
-    // wpm の計算 (5文字 / 単語)
-    const wpm = durationSec > 0 ? ((correctKeyCount / (durationSec * 5)) * 60).toFixed(1) : 0.0;
+    // wpm の計算 
+    const wpm = durationSec > 0 ? (correctKeyCount / durationSec).toFixed(2) : 0.00;
     // 正答率の計算
     const totalInputs = correctKeyCount + missedKeyCount;
     const accuracy = totalInputs > 0 ? ((correctKeyCount / totalInputs) * 100).toFixed(1) : 100;
@@ -453,8 +456,8 @@ const drawResultChart = () => {
         const minute = String(date.getMinutes()).padStart(2, '0');
         return `${month}/${day} ${hour}:${minute}`
     });
-    const wpmData = recentHistory.map((item) => item.wpm);
-    const accuracyData = recentHistory.map((item) => item.accuracy);
+    const wpmData = recentHistory.map((item) => Number(item.wpm));
+    const accuracyData = recentHistory.map((item) => Number(item.accuracy));
     
     // チャートの作成
     if(resultChartInstance){
@@ -468,7 +471,7 @@ const drawResultChart = () => {
             datasets: [
                 {
                     // wpmデータセット
-                    label: '   wpm   ',
+                    label: '   keys/秒   ',
                     data: wpmData,
                     borderColor: '#2777f7',
                     backgroundColor: 'rgba(39,119,247,0.1)',
@@ -514,7 +517,7 @@ const drawResultChart = () => {
                     display: true,
                     position: 'left',
                     beginAtZero: true,
-                    suggestedMax: Math.max(...wpmData, 0) +20,
+                    suggestedMax: Math.max(...wpmData, 0) + 1,
                     grid: { color: "#e9f1fd"},
                 },
                 y1: {
@@ -560,7 +563,7 @@ const drawResultChart = () => {
                         label: (context) => {
                             // wpm か accuracy かで表示する単位を変更
                             if(context.dataset.label === 'wpm'){
-                                return ' 正タイプ率 : ' + Number(context.raw).toFixed(1) + ' (word per minute)';
+                                return ' 正タイプ率 : ' + Number(context.raw).toFixed(2) + ' (keys/秒)';
                             } else if(context.dataset.label === '正タイプ率'){
                                 return 'タイピング速度 : ' + Number(context.raw).toFixed(1) + ' %';
                             }
@@ -569,7 +572,7 @@ const drawResultChart = () => {
                 }
             },
         },
-        // y軸上部に [wpm] を表示 
+        // y軸上部に [keys/秒] を表示 
         plugins: [{
             id: 'yAxisUnit',
             afterDraw: (chart) => {
@@ -586,7 +589,7 @@ const drawResultChart = () => {
 
                 // 左軸 wpm
                 ctx.textAlign = 'left';
-                ctx.fillText('[wpm]', y.left, yPos);
+                ctx.fillText('[keys/秒]', y.left, yPos);
 
                 // 右軸 accuracy
                 ctx.textAlign = 'right';
@@ -682,23 +685,43 @@ const showResults = (data) => {
 // ====================================
 
 const resetGame = () => {
-    // 画面の切り替え
-    startScreen.style.display = 'block';
-    gameScreen.style.display = 'none';
-    resultsScreen.style.display = 'none';
 
-    // アニメーションのリセット
-    for(const screen of delayScreens){
-        // アニメーションの解除
+    // ゲーム状態変数をリセット
+    questionQueue = [];         // 実際に出題される問題のリスト
+    currentQuestionIndex = 0;   // 今何問目か
+    chunkedText = [];           // 日本語を読点で区切ったリスト
+    chunkedRomaji = [];         // ローマ字をカンマで区切ったリスト
+    currentChunkIndex = 0;      // 今何個目の文節を打っているか
+    currentTargetRomaji = '';   // 今打つべきローマ字の文節
+    inputBuffer = '';           // ユーザーが打っている正誤未確定の文節
+    gameStartTime = 0;          // 開始タイムスタンプ
+    correctKeyCount = 0;        // 正解タイプ数
+    missedKeyCount = 0;         // ミスタイプ数
+    missedKeysMap = {};         // ミスタイプしたキーを格納するオブジェクト
+    isGameActive = false;       // ゲーム進行中フラグ
+    if(resultChartInstance){
+        resultChartInstance.destroy();
+        resultChartInstance = null;    
+    }
+
+    // html要素のリセット
+    textElement.innerHTML = '';
+    inputElement.textContent = '';
+    guideElement.textContent = '';
+    guideElement.style.display = 'none';
+    fieldElement.textContent = '';
+    sourceElement.textContent = '';
+
+    // 遅延画面アニメーションのリセット
+    delayScreens.forEach((screen) => {
         screen.getAnimations().forEach((animation) => {
             animation.cancel();
         });
-        // スタイルをクリアしてCSSの初期状態に戻す
         screen.style.opacity = '';
         screen.style.transform = '';
-    }
+    });
 
-    console.log('ゲームをリセットしました');
+    // ゲーム画面のアニメーションリセット
     questionArea.getAnimations().forEach((animation) => {
         animation.cancel();
     });
@@ -714,20 +737,27 @@ const resetGame = () => {
     keys.forEach((key) => {
         key.getAnimations().forEach((animation) => {
             animation.cancel();
-            key.style.opacity = '';
         });
+        key.style.opacity = '';
     });
+
     inputElement.getAnimations().forEach((animation) => {
         animation.cancel();
     });
     inputElement.style.opacity = '';
 
+    // 結果画面の統計アイテムのアニメーションリセット
     statItems.forEach((item) => {
         item.getAnimations().forEach((animation) => {
             animation.cancel();
         });
         item.style.opacity = '';
     });
+
+    // 画面の切り替え
+    startScreen.style.display = 'block';
+    gameScreen.style.display = 'none';
+    resultsScreen.style.display = 'none';
 };
 
 // ====================================
@@ -751,14 +781,20 @@ document.addEventListener('keydown', (event) => {
             btn.click();
         }else if(resultsScreen.style.display !== 'none'){
             event.preventDefault();
-            // restartButton.click();
+            const cfg = lastGameSettings || getGameSettings();
+            startGame(cfg);
         }
     }
 
     // Escキーでゲーム中断
-    if(event.code === 'Escape' && gameScreen !== 'none'){
+    if(event.code === 'Escape'){
+        if (gameScreen.style.display !== 'none'){
         event.preventDefault();
         resetGame();
+        }else if(resultsScreen.style.display !== 'none'){
+            event.preventDefault();
+            resetGame();
+        }
     }
 
     // キー入力の判定処理

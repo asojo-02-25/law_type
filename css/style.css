@@ -340,16 +340,31 @@ li{
     }
 
     .result-data-area{
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
         background-color: var(--base-color);
         margin: .5rem .25rem .5rem .25rem;
         padding: 8px 16px 8px 16px;
         height: 7.75rem;
         width: 37.5rem;
-        border-radius: 8px;
+        border-radius: 12px;
     }
+
     .stat-item{
         opacity: 0;
+        font-size: .875rem;
     }
+
+    .stat-item.upper{
+        grid-column: span 1;
+        /* text-align: center; */
+    }
+
+    .stat-item.lower{
+        grid-column: span 3;
+    }
+
+
 
     /*ゲーム中の画面切り替え*/
     #start-screen{
