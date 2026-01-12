@@ -67,6 +67,86 @@ window.addEventListener('load', () => {
 });
 
 // ====================================
+// 履歴取得 / 統計計算 ヘルパー
+// ====================================
+
+const STORAGE_KEY = 'law_type_play_data';
+
+const getStoredHistory = () => {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    } catch (e) {
+        console.error('storage parse error', e);
+        return [];
+    }
+};
+
+const computeHistoryMetrics = (history) => {
+    const count = history.length;
+    if (count === 0) {
+        return {
+            maxWpm: 0,
+            recentAvgWpm: 0,
+            recentChange: 0,
+            initialChange: 0,
+            latest: null,
+        };
+    }
+
+    const wpms = history.map(h => Number(h.wpm));
+    const maxWpm = Math.max(...wpms);
+
+    const recentN = Math.min(5, count);
+    const recentSlice = wpms.slice(-recentN);
+    const recentAvgWpm = recentSlice.reduce((a, b) => a + b, 0) / recentSlice.length;
+
+    const recentChange = count >= 1 ? (((wpms[count - 1] / recentAvgWpm) - 1) * 100) : 0;
+
+    const initialN = Math.min(5, count);
+    const initialAvgWpm = wpms.slice(0, initialN).reduce((a, b) => a + b, 0) / initialN;
+    const initialChange = recentAvgWpm - initialAvgWpm;
+
+    const latest = history[count - 1];
+
+    return {
+        maxWpm,
+        recentAvgWpm,
+        recentChange,
+        initialChange,
+        latest,
+    };
+};
+
+const displayResultStats = (data) => {
+    // html 要素の取得
+    const wpmEl = document.getElementById('stat-wpm');
+    const accEl = document.getElementById('stat-accuracy');
+    const recentChangeEl = document.getElementById('stat-wpm-recent-change');
+    const initialrecentChangeEl = document.getElementById('stat-wpm-initial-change');
+    const weakEl = document.getElementById('stat-weak-keys');
+    const recentAvgEl = document.getElementById('stat-recent-wpm-avg');
+    const maxEl = document.getElementById('stat-wpm-max');
+
+    if (wpmEl) wpmEl.textContent = Number(data.wpm).toFixed(1);
+    if (accEl) accEl.textContent = Number(data.accuracy).toFixed(1) + ' %';
+    if (weakEl) weakEl.textContent = data.weakKey || '特になし';
+
+    const history = getStoredHistory();
+    const metrics = computeHistoryMetrics(history);
+
+    if (recentChangeEl) {
+        const sign = metrics.recentChange >= 0? '+ ' : '';
+        recentChangeEl.textContent = sign + metrics.recentChange.toFixed(1) + ' %';
+    }
+    if (initialrecentChangeEl) {
+        const sign = metrics.initialChange >= 0 ? '+ ' : '';
+        initialrecentChangeEl.textContent = sign + metrics.initialChange.toFixed(1) + ' %';
+    }
+    if (recentAvgEl) recentAvgEl.textContent = metrics.recentAvgWpm.toFixed(1);
+    if (maxEl) maxEl.textContent = metrics.maxWpm.toFixed(1);
+};
+
+// ====================================
 // 補助関数
 // ====================================
 
@@ -131,14 +211,7 @@ const highlightMissedKey = (char) => {
 
 // --- localStrageへの保存 ---
 const saveToLocalStorage = (data) => {
-    const STORAGE_KEY = 'law_type_play_data';
-    let history = [];
-    try {
-        history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    }catch(error){
-        console.error('storage parse error', error);
-        history = [];
-    }
+    const history = getStoredHistory();
     history.push(data);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
 };
@@ -317,7 +390,7 @@ const finishGame = () => {
     const wpm = durationSec > 0 ? ((correctKeyCount / (durationSec * 5)) * 60).toFixed(1) : 0.0;
     // 正答率の計算
     const totalInputs = correctKeyCount + missedKeyCount;
-    const accuracy = totalInputs > 0 ? ((correctKeyCount / totalInputs) *100).toFixed(1) : 100;
+    const accuracy = totalInputs > 0 ? ((correctKeyCount / totalInputs) * 100).toFixed(1) : 100;
 
     // 苦手キーの特定
     let weakKeysList = [];
@@ -365,14 +438,7 @@ const drawResultChart = () => {
     const ctx = document.getElementById('result-chart').getContext('2d');
 
     // ローカルストレージからデータを取得
-    const STORAGE_KEY = 'law_type_play_data';
-    let history = [];
-    try{
-        history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    }catch(error){
-        console.error('storage parse error', error);
-        history = [];
-    }
+    const history = getStoredHistory();
 
     // 直近15回のデータを取得
     const recentHistory = history.slice(-15);
@@ -594,7 +660,9 @@ const showResults = (data) => {
         resultsScreen.style.display = 'flex';
         console.log('リザルト画面を表示');
 
+        // 画面表示の更新
         drawResultChart();
+        displayResultStats(data);
 
         statItems.forEach((item) => {
             item.animate([
@@ -742,13 +810,15 @@ const navActions = {
         gameScreen.style.display = 'none';
         resultsScreen.style.display = 'flex';
         drawResultChart();
-        statItems.forEach((item) => {
-            item.style.opacity = 1;
-        });
+        // 最新履歴で数値表示
+        const hist = getStoredHistory();
+        const latest = hist.length ? hist[hist.length - 1] : { wpm: 0, accuracy: 0, weakKey: '特になし' };
+        displayResultStats(latest);
+        statItems.forEach((item) => { item.style.opacity = 1; });
+    },
+    'nav-setting-link': () => {
+        window.location.href = 'setting.html';
     }
-    // 'nav-setting-link': () => {
-    //     // window.location.href = 'setting.html';
-    // };
 }
 
 document.querySelector('.nav').addEventListener('click', (event) => {
