@@ -505,6 +505,7 @@ const drawResultChart = () => {
             layout:{
                 padding: {
                     top: 8,
+                    bottom: 16,
                 }
             },
             interaction: {

@@ -42,6 +42,10 @@ a{
     font-size: 0.75rem;
 }
 
+.font-middle{
+    font-size: .875rem;
+}
+
 .font-black{
     color: var(--font-black);
 }
@@ -350,9 +354,16 @@ li{
         border-radius: 12px;
     }
 
+    .result-guide{
+        position: absolute;
+        width: 100%;
+        transform: translateY(-1.5rem);
+        pointer-events: none;
+        white-space: pre-wrap;
+    }
+
     .stat-item{
         opacity: 0;
-        font-size: .875rem;
     }
 
     .stat-item.upper{
@@ -363,8 +374,6 @@ li{
     .stat-item.lower{
         grid-column: span 3;
     }
-
-
 
     /*ゲーム中の画面切り替え*/
     #start-screen{
