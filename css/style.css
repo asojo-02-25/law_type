@@ -132,6 +132,22 @@ li{
         margin: 0 0 1rem 0;
     }
 
+    .form-question-number{
+        min-width: 4rem;
+    }
+
+    label{
+        cursor: pointer;
+        background-color: var(--base-color);
+        border: solid 1.5px var(--base-color);
+        border-radius: 4px;
+        color: var(--font-gray);
+    }
+
+    label:hover{
+        font-weight: bold;
+    }
+
     input[type="radio"]{
         appearance: none;
         -webkit-appearance: none;
@@ -145,21 +161,10 @@ li{
     
     input[type="radio"]:checked + label{
         font-weight: bold;
-        border-color: var(--base-color-2);
+        border-color: var(--accent-color-2);
     }
     
     input[type="checkbox"]:checked + label{
-        font-weight: bold;
-    }
-
-    label{
-        cursor: pointer;
-        background-color: var(--base-color);
-        border: solid 1.5px var(--base-color);
-        border-radius: 4px;
-    }
-
-    label:hover{
         font-weight: bold;
     }
     
