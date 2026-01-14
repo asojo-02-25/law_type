@@ -207,7 +207,7 @@ li{
 
     /* 出典（右側）：少し控えめに */
     .info-text {
-        color: var(--base-color);
+        color: var(--font-gray);
         font-weight: bold;
     }
 
