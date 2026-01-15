@@ -1,7 +1,7 @@
 export const typingQuestions = [
     {
-        text: '国際慣習法',
-        romaji: 'kokusaikannshuuhou',
+        text: 'テスト',
+        romaji: 'tesuto',
         field: 'テスト分野',
         source: 'テスト出典',
     }
