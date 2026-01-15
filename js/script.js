@@ -92,6 +92,8 @@ const computeHistoryMetrics = (history) => {
             initialAvgWpm: 0,
             initialChange: 0,
             latest: null,
+            totalPlayDays: 0,
+            currentStreakDays: 0,
         };
     }
 
@@ -120,6 +122,38 @@ const computeHistoryMetrics = (history) => {
     const initialAvgWpm = toAvg(initialWpms);
     const initialChange = initialAvgWpm > 0 ? (((latestWpm / initialAvgWpm) - 1) * 100) : 0;
 
+    // aside-contents 用データ
+    // 総プレイ日数の計算
+    const daySet = new Set(
+        history.map(h => {
+            const d = new Date(h.date);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        })
+    );
+
+    const totalPlayDays = daySet.size;
+
+    // 連続プレイ日数の計算
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let streak = 0;
+
+    const sortedDays = Array.from(daySet).sort((a,b) => b.localeCompare(a));
+
+    for(const dayStr of sortedDays){
+        const d = new Date(dayStr);
+        d.setHours(0,0,0,0);
+        const diffDays = Math.round((today - d) / (1000 * 60 * 60 * 24));
+        if(diffDays === streak){
+            streak += 1;
+        }else if(diffDays> streak){
+            break;
+        }
+    }
+
     return {
         maxWpm,
         recentAvgWpm,
@@ -127,6 +161,8 @@ const computeHistoryMetrics = (history) => {
         initialAvgWpm,
         initialChange,
         latest,
+        totalPlayDays,
+        currentStreakDays: streak,
     };
 };
 
