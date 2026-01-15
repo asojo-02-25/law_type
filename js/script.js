@@ -89,6 +89,7 @@ const computeHistoryMetrics = (history) => {
             maxWpm: 0,
             recentAvgWpm: 0,
             recentChange: 0,
+            initialAvgWpm: 0,
             initialChange: 0,
             latest: null,
         };
@@ -96,23 +97,34 @@ const computeHistoryMetrics = (history) => {
 
     const wpms = history.map(h => Number(h.wpm));
     const maxWpm = Math.max(...wpms);
-
-    const recentN = Math.min(15, count);
-    const recentSlice = wpms.slice(-recentN);
-    const recentAvgWpm = recentSlice.reduce((a, b) => a + b, 0) / recentSlice.length;
-
-    const recentChange = count >= 1 ? (((wpms[count - 1] / recentAvgWpm) - 1) * 100) : 0;
-
-    const initialN = Math.min(15, count);
-    const initialAvgWpm = wpms.slice(0, initialN).reduce((a, b) => a + b, 0) / initialN;
-    const initialChange = recentAvgWpm - initialAvgWpm;
-
     const latest = history[count - 1];
+    const latestWpm = Number(latest.wpm);
+
+    const DAY = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    const toAvg = (arr) => arr.length > 0 ? arr.reduce((a,b) => a + b, 0) / arr.length : 0;
+    const pickWindow = (startMs, endMs) => 
+        history
+            .map(h => ({ t: new Date(h.date).getTime(), wpm: Number(h.wpm) }))
+            .filter(h => h.t >= startMs && h.t <= endMs)
+            .map(h => h.wpm);
+    
+    // 1週間前ウインドウ
+    const recentWpms = pickWindow(now - 14 * DAY, now - 7 * DAY);
+    const recentAvgWpm = toAvg(recentWpms);
+    const recentChange = recentAvgWpm > 0 ? (((latestWpm / recentAvgWpm) - 1) * 100) : 0
+
+    // 1か月前ウインドウ
+    const initialWpms = pickWindow(now - 60 * DAY, now - 30 * DAY);
+    const initialAvgWpm = toAvg(initialWpms);
+    const initialChange = initialAvgWpm > 0 ? (((latestWpm / initialAvgWpm) - 1) * 100) : 0;
 
     return {
         maxWpm,
         recentAvgWpm,
         recentChange,
+        initialAvgWpm,
         initialChange,
         latest,
     };
@@ -122,11 +134,20 @@ const displayResultStats = (data) => {
     // html 要素の取得
     const wpmEl = document.getElementById('stat-wpm');
     const accEl = document.getElementById('stat-accuracy');
-    const recentChangeEl = document.getElementById('stat-wpm-recent-change');
-    const initialrecentChangeEl = document.getElementById('stat-wpm-initial-change');
     const weakEl = document.getElementById('stat-weak-keys');
     const recentAvgEl = document.getElementById('stat-recent-wpm-avg');
+    const recentChangeEl = document.getElementById('stat-wpm-recent-change');
+    const initialAvgEl = document.getElementById('stat-initial-wpm-avg');
+    const initialrecentChangeEl = document.getElementById('stat-wpm-initial-change');
     const maxEl = document.getElementById('stat-wpm-max');
+
+    const applyChangeStyle = (el, val) => {
+        if (!el) return;
+        let color = '#6b7280';
+        if (val > 0) color = '#e65a4d';
+        else if (val < 0) color = '#3b82f6';
+        el.style.color = color;
+    };
 
     if (wpmEl) wpmEl.textContent = Number(data.wpm).toFixed(2) + ' keys/秒';
     if (accEl) accEl.textContent = Number(data.accuracy).toFixed(1) + ' %';
@@ -135,13 +156,21 @@ const displayResultStats = (data) => {
     const history = getStoredHistory();
     const metrics = computeHistoryMetrics(history);
 
+    if(recentAvgEl) {
+        recentAvgEl.textContent = metrics.recentAvgWpm.toFixed(2) + ' keys/秒';
+    }
     if (recentChangeEl) {
-        const sign = metrics.recentChange >= 0? '+ ' : '';
+        const sign = metrics.recentChange > 0 ? '+ ' : '';
         recentChangeEl.textContent = sign + metrics.recentChange.toFixed(1) + ' %';
+        applyChangeStyle(recentChangeEl, metrics.recentChange);
+    }
+    if (initialAvgEl) {
+        initialAvgEl.textContent = metrics.initialAvgWpm.toFixed(2) + ' keys/秒';
     }
     if (initialrecentChangeEl) {
-        const sign = metrics.initialChange >= 0 ? '+ ' : '';
+        const sign = metrics.initialChange > 0 ? '+ ' : '';
         initialrecentChangeEl.textContent = sign + metrics.initialChange.toFixed(1) + ' %';
+        applyChangeStyle(initialrecentChangeEl, metrics.initialChange);
     }
     if (recentAvgEl) recentAvgEl.textContent = metrics.recentAvgWpm.toFixed(2) + ' keys/秒';
     if (maxEl) maxEl.textContent = metrics.maxWpm.toFixed(2) + ' keys/秒';
