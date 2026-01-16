@@ -65,6 +65,10 @@ window.addEventListener('load', () => {
     startScreen.style.display = 'block';
     gameScreen.style.display = 'none';
     resultsScreen.style.display = 'none';
+
+    // サイドコンテンツを更新
+    const history = getStoredHistory();
+    displaySideStats(history);
 });
 
 // ====================================
@@ -86,7 +90,6 @@ const computeHistoryMetrics = (history) => {
     const count = history.length;
     if (count === 0) {
         return {
-            maxWpm: 0,
             recentAvgWpm: 0,
             recentChange: 0,
             initialAvgWpm: 0,
@@ -94,6 +97,8 @@ const computeHistoryMetrics = (history) => {
             latest: null,
             totalPlayDays: 0,
             currentStreakDays: 0,
+            currentAvgWpm: 0,
+            maxWpm: 0,
         };
     }
 
@@ -154,8 +159,11 @@ const computeHistoryMetrics = (history) => {
         }
     }
 
+    // 直近の平均スピード
+    const currentWpms = pickWindow(now - 7 * DAY, now);
+    const currentAvgWpm = toAvg(currentWpms);
+
     return {
-        maxWpm,
         recentAvgWpm,
         recentChange,
         initialAvgWpm,
@@ -163,6 +171,8 @@ const computeHistoryMetrics = (history) => {
         latest,
         totalPlayDays,
         currentStreakDays: streak,
+        currentAvgWpm,
+        maxWpm,
     };
 };
 
@@ -733,6 +743,9 @@ const showResults = (data) => {
         drawResultChart();
         displayResultStats(data);
 
+        const history = getStoredHistory();
+        displaySideStats(history);
+
         statItems.forEach((item) => {
             item.animate([
                 {opacity: 0},
@@ -933,6 +946,32 @@ document.querySelector('.nav').addEventListener('click', (event) => {
     const action = navActions[link.className];
     if(action) action();
 });
+
+// --- サイドコンテンツの更新 ---
+const displaySideStats = (history) => {
+    const totalPlayDaysEl = document.querySelector('#total-play-days');
+    const currentStreakDaysEl = document.querySelector('#current-streak-days');
+    const sideCurrentAvgWpmEl = document.querySelector('#side-current-avg-wpm');
+    const sideMaxWpmEl = document.querySelector('#side-max-wpm');
+    const nextExamDaysEl = document.querySelector('#next-exam-days');
+
+    const metrics = computeHistoryMetrics(history);
+    if(totalPlayDaysEl){
+        totalPlayDaysEl.textContent = metrics.totalPlayDays + ' 日';
+    }
+    if(currentStreakDaysEl){
+        currentStreakDaysEl.textContent = metrics.currentStreakDays + ' 日';
+    }
+    if(sideCurrentAvgWpmEl){
+        sideCurrentAvgWpmEl.textContent = metrics.currentAvgWpm.toFixed(2) + ' keys/秒';
+    }
+    if(sideMaxWpmEl){
+        sideMaxWpmEl.textContent = metrics.maxWpm.toFixed(2) + ' keys/秒';
+    }
+    if(nextExamDaysEl){
+        nextExamDaysEl.textContent = metrics.nextExamDays + ' 日';
+    }
+}
 
 // const homeLink = document.querySelector('.nav-home-link');
 // const resultsLink = document.querySelector('.nav-results-link');
