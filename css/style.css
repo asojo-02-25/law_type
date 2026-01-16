@@ -432,6 +432,10 @@ article{
     padding : .25rem;
     margin: .5rem auto .5rem;
 }
+.aside-stats-container{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
 
 /*フッター*/
 footer{

@@ -65,6 +65,10 @@ window.addEventListener('load', () => {
     startScreen.style.display = 'block';
     gameScreen.style.display = 'none';
     resultsScreen.style.display = 'none';
+
+    // サイドコンテンツを更新
+    const history = getStoredHistory();
+    displaySideStats(history);
 });
 
 // ====================================
@@ -86,12 +90,15 @@ const computeHistoryMetrics = (history) => {
     const count = history.length;
     if (count === 0) {
         return {
-            maxWpm: 0,
             recentAvgWpm: 0,
             recentChange: 0,
             initialAvgWpm: 0,
             initialChange: 0,
             latest: null,
+            totalPlayDays: 0,
+            currentStreakDays: 0,
+            currentAvgWpm: 0,
+            maxWpm: 0,
         };
     }
 
@@ -120,13 +127,52 @@ const computeHistoryMetrics = (history) => {
     const initialAvgWpm = toAvg(initialWpms);
     const initialChange = initialAvgWpm > 0 ? (((latestWpm / initialAvgWpm) - 1) * 100) : 0;
 
+    // aside-contents 用データ
+    // 総プレイ日数の計算
+    const daySet = new Set(
+        history.map(h => {
+            const d = new Date(h.date);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        })
+    );
+
+    const totalPlayDays = daySet.size;
+
+    // 連続プレイ日数の計算
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let streak = 0;
+
+    const sortedDays = Array.from(daySet).sort((a,b) => b.localeCompare(a));
+
+    for(const dayStr of sortedDays){
+        const d = new Date(dayStr);
+        d.setHours(0,0,0,0);
+        const diffDays = Math.round((today - d) / (1000 * 60 * 60 * 24));
+        if(diffDays === streak){
+            streak += 1;
+        }else if(diffDays> streak){
+            break;
+        }
+    }
+
+    // 直近の平均スピード
+    const currentWpms = pickWindow(now - 7 * DAY, now);
+    const currentAvgWpm = toAvg(currentWpms);
+
     return {
-        maxWpm,
         recentAvgWpm,
         recentChange,
         initialAvgWpm,
         initialChange,
         latest,
+        totalPlayDays,
+        currentStreakDays: streak,
+        currentAvgWpm,
+        maxWpm,
     };
 };
 
@@ -697,6 +743,9 @@ const showResults = (data) => {
         drawResultChart();
         displayResultStats(data);
 
+        const history = getStoredHistory();
+        displaySideStats(history);
+
         statItems.forEach((item) => {
             item.animate([
                 {opacity: 0},
@@ -897,6 +946,32 @@ document.querySelector('.nav').addEventListener('click', (event) => {
     const action = navActions[link.className];
     if(action) action();
 });
+
+// --- サイドコンテンツの更新 ---
+const displaySideStats = (history) => {
+    const totalPlayDaysEl = document.querySelector('#total-play-days');
+    const currentStreakDaysEl = document.querySelector('#current-streak-days');
+    const sideCurrentAvgWpmEl = document.querySelector('#side-current-avg-wpm');
+    const sideMaxWpmEl = document.querySelector('#side-max-wpm');
+    const nextExamDaysEl = document.querySelector('#next-exam-days');
+
+    const metrics = computeHistoryMetrics(history);
+    if(totalPlayDaysEl){
+        totalPlayDaysEl.textContent = metrics.totalPlayDays + ' 日';
+    }
+    if(currentStreakDaysEl){
+        currentStreakDaysEl.textContent = metrics.currentStreakDays + ' 日';
+    }
+    if(sideCurrentAvgWpmEl){
+        sideCurrentAvgWpmEl.textContent = metrics.currentAvgWpm.toFixed(2) + ' keys/秒';
+    }
+    if(sideMaxWpmEl){
+        sideMaxWpmEl.textContent = metrics.maxWpm.toFixed(2) + ' keys/秒';
+    }
+    if(nextExamDaysEl){
+        nextExamDaysEl.textContent = metrics.nextExamDays + ' 日';
+    }
+}
 
 // const homeLink = document.querySelector('.nav-home-link');
 // const resultsLink = document.querySelector('.nav-results-link');
