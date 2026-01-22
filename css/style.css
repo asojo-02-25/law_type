@@ -460,7 +460,7 @@ footer{
 }
 
 /* プライバシーポリシー */
-.policy-main{
+.policy-rule-main{
     margin: 1rem 6rem 1rem 6rem;
     min-width: 500px;
     padding: 1rem 1rem 1rem 1rem;
@@ -469,7 +469,7 @@ footer{
     box-shadow: 0 0 .5rem rgba(0,0,0,0.1), 0 0 1.5rem rgba(0,0,0,0.05);
 }
 
-.policy-main ul{
+.policy-rule-main ul{
     margin-left: 1.5rem;
     color: var(--font-gray);
     list-style-type: disc;
