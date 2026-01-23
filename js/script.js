@@ -16,6 +16,8 @@ let missedKeysMap = {};         // ミスタイプしたキーを格納するオ
 let isGameActive = false;       // ゲーム進行中フラグ
 let resultChartInstance = null; // 結果チャートのインスタンス保持用
 let lastGameSettings = null;    // 直近プレイ設定を保持
+let resultTimer1 = null;        // 結果画面タイマー1
+let resultTimer2 = null;        // 結果画面タイマー2
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
@@ -37,19 +39,19 @@ const keyIdMap = {
 // HTML要素の取得
 // ====================================
 
-const form = document.querySelector('#form');
-const startScreen = document.querySelector('#start-screen');
-const gameScreen = document.querySelector('#game-screen');
-const resultsScreen = document.querySelector('#results-screen');
+const form = document.getElementById('form');
+const startScreen = document.getElementById('start-screen');
+const gameScreen = document.getElementById('game-screen');
+const resultsScreen = document.getElementById('results-screen');
 const delayScreens = document.querySelectorAll('.delay-screen');
-const btn = document.querySelector('#start-button');
-const textElement = document.querySelector('#question-text');
-const inputElement = document.querySelector('#user-input');
-const guideElement = document.querySelector('#current-guide');
-const fieldElement = document.querySelector('#question-field');
-const sourceElement  = document.querySelector('#question-source'); 
-const questionArea = document.querySelector('.question-area');
-const answerArea = document.querySelector('.answer-area');
+const btn = document.getElementById('start-button');
+const textElement = document.getElementById('question-text');
+const inputElement = document.getElementById('user-input');
+const guideElement = document.getElementById('current-guide');
+const fieldElement = document.getElementById('question-field');
+const sourceElement  = document.getElementById('question-source'); 
+const questionArea = document.getElementById('question-area');
+const answerArea = document.getElementById('answer-area');
 const keys = document.querySelectorAll('.key');
 const statItems = document.querySelectorAll('.stat-item');
 const keyboardContainer = document.getElementById('keyboard-container');
@@ -700,7 +702,7 @@ const drawResultChart = () => {
 // ====================================
 
 const showResults = (data) => {
-     setTimeout(() => {
+    resultTimer1 = setTimeout(() => {
         questionArea.animate([
             {height: '13rem', margin: '.5rem .25rem .5rem .25rem', opacity: 1},
             {height: '0rem', margin: '0 .25rem 0 .25rem', opacity: 0},
@@ -739,7 +741,7 @@ const showResults = (data) => {
         });
     }, 1000)
     
-    setTimeout(() => {    
+    resultTimer2 = setTimeout(() => {    
         gameScreen.style.display = 'none';
         resultsScreen.style.display = 'flex';
         console.log('リザルト画面を表示');
@@ -786,6 +788,14 @@ const resetGame = () => {
     if(resultChartInstance){
         resultChartInstance.destroy();
         resultChartInstance = null;    
+    }
+    if(resultTimer1){
+        clearTimeout(resultTimer1);
+        resultTimer1 = null;
+    }
+    if(resultTimer2){
+        clearTimeout(resultTimer2);
+        resultTimer2 = null;
     }
 
     // html要素のリセット
@@ -863,11 +873,15 @@ document.addEventListener('keydown', (event) => {
     if(event.code === 'Space'){
         if(startScreen.style.display !== 'none'){
             event.preventDefault();
+            resetGame();
             btn.click();
+            return;
         }else if(resultsScreen.style.display !== 'none'){
             event.preventDefault();
+            resetGame();
             const cfg = lastGameSettings || getGameSettings();
             startGame(cfg);
+            return;
         }
     }
 
@@ -876,9 +890,11 @@ document.addEventListener('keydown', (event) => {
         if (gameScreen.style.display !== 'none'){
         event.preventDefault();
         resetGame();
+        return;
         }else if(resultsScreen.style.display !== 'none'){
             event.preventDefault();
             resetGame();
+            return;
         }
     }
 
