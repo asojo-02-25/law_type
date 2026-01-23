@@ -219,12 +219,12 @@ hr{
         font-weight: bold;
     }
 
-    .question-area{
+    #question-area{
         height: 12.5rem;
         align-items: center;
     }
 
-    .answer-area{
+    #answer-area{
         height: 8rem;
         display: flex;
         flex-direction: column;

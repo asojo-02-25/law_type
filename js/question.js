@@ -22,5 +22,5 @@ export const typingQuestions = [
     //     romaji: 'kennpoudaisannshounoshokiteiniyorukihonntekijinnkennnohoshouha,kennrinoseisitujounihonkokuminnnomiwosonotaishoutositeirutokaisarerumonowonozoki,wagakuninizairyuusurugaikokujinnnitaisitemohitosikuoyobumonotokaisubekidearu.',
     //     field: '憲法',
     //     source: 'マクリーン事件',
-    // }
+    // },
 ];
