@@ -52,6 +52,7 @@ const questionArea = document.querySelector('.question-area');
 const answerArea = document.querySelector('.answer-area');
 const keys = document.querySelectorAll('.key');
 const statItems = document.querySelectorAll('.stat-item');
+const keyboardContainer = document.getElementById('keyboard-container');
 
 // --- 問題を格納する配列のインポート ---
 import {typingQuestions} from './question.js';
@@ -312,8 +313,12 @@ const startGame = (config) => {
     if(config.settings.includes('roman-letters-represent')){
         console.log("ローマ字を表示します");
     }
-    if(config.settings.includes('keyboard-represent')){
-        console.log("キーボードを表示します");
+    if(keyboardContainer){
+        if(config.settings.includes('keyboard-represent')){
+            keyboardContainer.style.visibility = 'visible';
+        } else {
+            keyboardContainer.style.visibility = 'hidden';
+        }
     }
 
     // 問題の出題
@@ -790,6 +795,7 @@ const resetGame = () => {
     guideElement.style.display = 'none';
     fieldElement.textContent = '';
     sourceElement.textContent = '';
+    keyboardContainer.style.visibility = 'visible';
 
     // 遅延画面アニメーションのリセット
     delayScreens.forEach((screen) => {
