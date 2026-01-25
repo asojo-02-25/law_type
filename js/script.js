@@ -50,6 +50,7 @@ const inputElement = document.getElementById('user-input');
 const guideElement = document.getElementById('current-guide');
 const fieldElement = document.getElementById('question-field');
 const sourceElement  = document.getElementById('question-source'); 
+const remainingElement = document.getElementById('question-remaining');
 const questionArea = document.getElementById('question-area');
 const answerArea = document.getElementById('answer-area');
 const keys = document.querySelectorAll('.key');
@@ -268,6 +269,24 @@ const highlightNextChar = () => {
     }     
 };
 
+// --- 残り問題数の表示更新 ---
+const updateRemainingQuestionCount = (forcedValue = null) => {
+    if(!remainingElement) return;
+
+    if(forcedValue !== null){
+        remainingElement.textContent = `残り${forcedValue}問`;
+        return;
+    }
+
+    if(!isGameActive || questionQueue.length === 0){
+        remainingElement.textContent = '';
+        return;
+    }
+
+    const remaining = Math.max(questionQueue.length - currentQuestionIndex, 0);
+    remainingElement.textContent = `残り${remaining}問`;
+};
+
 // --- ミスタイプしたキーのハイライト ---
 const highlightMissedKey = (char) => {
     // id の取得
@@ -442,6 +461,8 @@ const updateQuestionDisplay = () => {
 
     // 次入力する文字のハイライト
     highlightNextChar();
+
+    updateRemainingQuestionCount();
 };
 
 // ====================================
@@ -465,6 +486,7 @@ const nextQuestion = () => {
 // ====================================
 
 const finishGame = () => {
+    updateRemainingQuestionCount(0);
     isGameActive = false;       // ゲーム終了フラグ
     // 終了タイムスタンプ
     const gameEndTime = Date.now();
@@ -797,6 +819,8 @@ const resetGame = () => {
         clearTimeout(resultTimer2);
         resultTimer2 = null;
     }
+
+    updateRemainingQuestionCount();
 
     // html要素のリセット
     textElement.innerHTML = '';
