@@ -205,6 +205,8 @@ hr{
         padding: .25rem 2rem 0 2rem;
     }
 
+    
+
     /* 分野（左側）：バッジ風のデザイン */
     .info-badge {
         background-color: var(--main-color);
@@ -220,8 +222,14 @@ hr{
     }
 
     #question-area{
+        display: flex;
+        flex-direction: column;
         height: 12.5rem;
-        align-items: center;
+    }
+
+    #question-remaining{
+        padding: 0 2rem .5rem 2rem;
+        margin-top: auto;
     }
 
     #answer-area{
