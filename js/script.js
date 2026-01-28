@@ -18,6 +18,8 @@ let resultChartInstance = null; // 結果チャートのインスタンス保持
 let lastGameSettings = null;    // 直近プレイ設定を保持
 let resultTimer1 = null;        // 結果画面タイマー1
 let resultTimer2 = null;        // 結果画面タイマー2
+let kanaUnits = [];             // かなユニットの配列（辞書前処理用）
+let kanaUnitCandidates = [];    // 各ユニットのローマ字候補一覧
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
@@ -59,6 +61,7 @@ const keyboardContainer = document.getElementById('keyboard-container');
 
 // --- 問題を格納する配列のインポート ---
 import {typingQuestions} from './question.js';
+import {parseKanaUnits, getRomajiCandidatesForUnit} from './romajiDictionary.js';
 
 // ====================================
 // ページロード時の初期化
@@ -419,6 +422,17 @@ const setupQuestionData = () => {
     currentChunkIndex = 0;
     inputBuffer = "";
     currentTargetRomaji = chunkedRomaji[0];
+
+    if(currentQuestion.kana){
+        kanaUnits = parseKanaUnits(currentQuestion.kana);
+        kanaUnitCandidates = kanaUnits.map((unit) => ({
+            unit,
+            candidates: getRomajiCandidatesForUnit(unit),
+        }));
+    }else{
+        kanaUnits = [];
+        kanaUnitCandidates = [];
+    }
 };
 
 // ====================================
@@ -951,7 +965,6 @@ document.addEventListener('keydown', (event) => {
                 const upperChar = nextExpectedChar.toUpperCase();
                 missedKeysMap[upperChar] = (missedKeysMap[upperChar] || 0) + 1;
             }
-
             highlightMissedKey(event.key);    
         }
         // 画面更新
