@@ -10,7 +10,6 @@
     --font-gray: #5c5e64;
     --font-black: #1f2937;
     --font-white: #ffffff;
-
 }
 
 body{
@@ -89,20 +88,27 @@ hr{
 }
 
 /* ヘッダー&ナビゲーションメニュー */
-.header-flex{
+/* .header-flex{
     display: flex;
     justify-content: space-between; 
-    background-color: var(--base-color-2);
+    background-color: var(--base-color);
     height: 2.25rem;
     align-items: center;
     font-size: 1rem;
     padding: 0 1rem 0 1rem;
     white-space: nowrap;
-}
+} */
 
 .nav-flex{
+    background-color: var(--base-color);
     display: flex;
-    gap: .5rem
+    flex-direction: row;
+    /* justify-content: flex-end; */
+    height: 2.25rem;
+    width: 100%;
+    align-items: center;
+    padding: 0 1rem 0 1rem;
+    gap: .5rem;
 }
 
 /*メインコンテンツ*/
@@ -275,7 +281,7 @@ hr{
         display: grid;
         grid-template-columns:repeat(45, 1fr);
         gap: 2px;
-        padding: 8px 16px 8px 16px;
+        padding: .5rem 1rem .5rem 1rem;
         height: 7.75rem;
     }
 
@@ -369,7 +375,7 @@ hr{
         grid-template-columns: repeat(3, 1fr);
         background-color: var(--base-color);
         margin: .5rem .25rem .5rem .25rem;
-        padding: 8px 16px 8px 16px;
+        padding: .5rem 1rem .5rem 1rem;
         height: 7.75rem;
         width: 37.5rem;
         border-radius: 12px;
