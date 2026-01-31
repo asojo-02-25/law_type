@@ -1,3 +1,6 @@
+import {typingQuestions} from './question.js';
+import {parseKanaUnits, getRomajiCandidatesForUnit} from './romajiDictionary.js';
+
 // ====================================
 // グローバル変数・定数の定義
 // ====================================
@@ -20,6 +23,49 @@ let resultTimer1 = null;        // 結果画面タイマー1
 let resultTimer2 = null;        // 結果画面タイマー2
 let kanaUnits = [];             // かなユニットの配列（辞書前処理用）
 let kanaUnitCandidates = [];    // 各ユニットのローマ字候補一覧
+const typingState = {           // 新ローマ字エンジン用の状態管理
+    units: [],
+    currentUnitIdx: 0,
+    typedBuffer: '',
+    candidates: [],
+    isLocked: false,
+};
+
+const resetTypingState = () => {
+    typingState.units = [];
+    typingState.currentUnitIdx = 0;
+    typingState.typedBuffer = '';
+    typingState.candidates = [];
+    typingState.isLocked = false;
+};
+
+const hydrateTypingStateFromKana = (units) => {
+    if (!Array.isArray(units) || units.length === 0) {
+        resetTypingState();
+        return;
+    }
+    typingState.units = [...units];
+    typingState.currentUnitIdx = 0;
+    typingState.typedBuffer = '';
+    typingState.candidates = [...getRomajiCandidatesForUnit(units[0])];
+    typingState.isLocked = typingState.candidates.length === 1;
+    console.debug('[KanaParser] units', typingState.units);
+    console.debug('[KanaParser] first candidates', typingState.candidates);
+};
+
+const runKanaParserSmokeTest = () => {
+    const sample = 'がっこう';
+    const parsed = parseKanaUnits(sample);
+    const expected = ['が', 'っこ', 'う'];
+    const isMatch = parsed.length === expected.length && parsed.every((unit, idx) => unit === expected[idx]);
+    if (!isMatch) {
+        console.warn('[KanaParser] unexpected chunking result', { sample, parsed, expected });
+    } else {
+        console.debug('[KanaParser] smoke test ok', parsed);
+    }
+};
+
+runKanaParserSmokeTest();
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
@@ -58,10 +104,6 @@ const answerArea = document.getElementById('answer-area');
 const keys = document.querySelectorAll('.key');
 const statItems = document.querySelectorAll('.stat-item');
 const keyboardContainer = document.getElementById('keyboard-container');
-
-// --- 問題を格納する配列のインポート ---
-import {typingQuestions} from './question.js';
-import {parseKanaUnits, getRomajiCandidatesForUnit} from './romajiDictionary.js';
 
 // ====================================
 // ページロード時の初期化
@@ -423,16 +465,13 @@ const setupQuestionData = () => {
     inputBuffer = "";
     currentTargetRomaji = chunkedRomaji[0];
 
-    if(currentQuestion.kana){
-        kanaUnits = parseKanaUnits(currentQuestion.kana);
-        kanaUnitCandidates = kanaUnits.map((unit) => ({
-            unit,
-            candidates: getRomajiCandidatesForUnit(unit),
-        }));
-    }else{
-        kanaUnits = [];
-        kanaUnitCandidates = [];
-    }
+    const kanaSource = currentQuestion.kana || '';
+    kanaUnits = kanaSource ? parseKanaUnits(kanaSource) : [];
+    kanaUnitCandidates = kanaUnits.map((unit) => ({
+        unit,
+        candidates: getRomajiCandidatesForUnit(unit),
+    }));
+    hydrateTypingStateFromKana(kanaUnits);
 };
 
 // ====================================
@@ -821,6 +860,9 @@ const resetGame = () => {
     missedKeyCount = 0;         // ミスタイプ数
     missedKeysMap = {};         // ミスタイプしたキーを格納するオブジェクト
     isGameActive = false;       // ゲーム進行中フラグ
+    kanaUnits = [];
+    kanaUnitCandidates = [];
+    resetTypingState();
     if(resultChartInstance){
         resultChartInstance.destroy();
         resultChartInstance = null;    
