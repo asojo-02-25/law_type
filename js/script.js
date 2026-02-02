@@ -24,33 +24,52 @@ let resultTimer2 = null;        // 結果画面タイマー2
 let kanaUnits = [];             // かなユニットの配列（辞書前処理用）
 let kanaUnitCandidates = [];    // 各ユニットのローマ字候補一覧
 const typingState = {           // 新ローマ字エンジン用の状態管理
-    units: [],
-    currentUnitIdx: 0,
-    typedBuffer: '',
-    candidates: [],
-    isLocked: false,
+    routes: [],
 };
 
 const resetTypingState = () => {
-    typingState.units = [];
-    typingState.currentUnitIdx = 0;
-    typingState.typedBuffer = '';
-    typingState.candidates = [];
-    typingState.isLocked = false;
+    typingState.routes = [];
 };
 
-const hydrateTypingStateFromKana = (units) => {
-    if (!Array.isArray(units) || units.length === 0) {
-        resetTypingState();
-        return;
+const buildRouteState = (units, id, label) => {
+    const firstCandidates = units.length ? getRomajiCandidatesForUnit(units[0]) : [];
+    return {
+        id,
+        label,
+        units,
+        currentUnitIdx: 0,
+        typedBuffer: '',
+        candidates: [...firstCandidates],
+        isLocked: firstCandidates.length === 1,
+    };
+};
+
+const hydrateTypingStateFromKana = (kanaSource) => {
+    resetTypingState();
+    const kanaList = Array.isArray(kanaSource)
+        ? kanaSource.filter((kana) => typeof kana === 'string' && kana.trim().length > 0)
+        : (typeof kanaSource === 'string' && kanaSource.trim().length > 0 ? [kanaSource] : []);
+
+    const seenSignatures = new Set();
+    kanaList.forEach((kanaText, idx) => {
+        const units = parseKanaUnits(kanaText);
+        if (units.length === 0) return;
+        const signature = units.join('|');
+        if (seenSignatures.has(signature)) return;
+        seenSignatures.add(signature);
+        typingState.routes.push(buildRouteState(units, `route-${idx}`, kanaText));
+    });
+
+    if (typingState.routes.length === 0) {
+        console.debug('[KanaParser] no kana routes registered');
+    } else {
+        console.debug(`[KanaParser] registered ${typingState.routes.length} route(s)`);
+        typingState.routes.forEach((route) => {
+            console.debug('[KanaParser] route snapshot', route.id, route.units, route.candidates);
+        });
     }
-    typingState.units = [...units];
-    typingState.currentUnitIdx = 0;
-    typingState.typedBuffer = '';
-    typingState.candidates = [...getRomajiCandidatesForUnit(units[0])];
-    typingState.isLocked = typingState.candidates.length === 1;
-    console.debug('[KanaParser] units', typingState.units);
-    console.debug('[KanaParser] first candidates', typingState.candidates);
+
+    return typingState.routes;
 };
 
 const runKanaParserSmokeTest = () => {
@@ -465,13 +484,12 @@ const setupQuestionData = () => {
     inputBuffer = "";
     currentTargetRomaji = chunkedRomaji[0];
 
-    const kanaSource = currentQuestion.kana || '';
-    kanaUnits = kanaSource ? parseKanaUnits(kanaSource) : [];
+    const routes = hydrateTypingStateFromKana(currentQuestion.kana);
+    kanaUnits = routes.length > 0 ? [...routes[0].units] : [];
     kanaUnitCandidates = kanaUnits.map((unit) => ({
         unit,
         candidates: getRomajiCandidatesForUnit(unit),
     }));
-    hydrateTypingStateFromKana(kanaUnits);
 };
 
 // ====================================
