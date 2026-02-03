@@ -409,14 +409,11 @@ const startGame = (config) => {
     // 問題の出題
     // 問題をシャッフル
     const shuffleArray = (array) => {
-        // もとの配列が壊れないようにコピーを作成(スプレッド構文)
         const cloneArray = [...array];
-        // 後ろから順にランダムな場所に入れ替え--fisher-Yates shuffle
         for(let i = cloneArray.length - 1; i > 0; i--){
             const rand = Math.floor(Math.random() * (i + 1));
             [cloneArray[i], cloneArray[rand]] = [cloneArray[rand], cloneArray[i]];
         };
-        // 次の処理にcloneArrayを渡す
         return cloneArray;
     }
     const shuffledQuestions = shuffleArray(typingQuestions);
@@ -532,7 +529,6 @@ const updateQuestionDisplay = () => {
 
     // 次入力する文字のハイライト
     highlightNextChar();
-
     updateRemainingQuestionCount();
 };
 
@@ -541,7 +537,7 @@ const updateQuestionDisplay = () => {
 // ====================================
 
 const nextQuestion = () => {
-    currentQuestionIndex++;     // 次の問題へ
+    currentQuestionIndex++;
 
     // まだ問題があれば表示を更新 なければ終了
     if(currentQuestionIndex < questionQueue.length){
@@ -558,12 +554,12 @@ const nextQuestion = () => {
 
 const finishGame = () => {
     updateRemainingQuestionCount(0);
-    isGameActive = false;       // ゲーム終了フラグ
+    // ゲーム終了フラグ
+    isGameActive = false;
     // 終了タイムスタンプ
     const gameEndTime = Date.now();
     // 経過時間
     const durationSec = (gameEndTime - gameStartTime) / 1000;
-
     // wpm の計算 
     const wpm = durationSec > 0 ? (correctKeyCount / durationSec).toFixed(2) : 0.00;
     // 正答率の計算
