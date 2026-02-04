@@ -30,12 +30,9 @@ const typingState = {
     isLocked: false,     // 候補が一意に決まったら true
 };
 
-// ロガー : ログ出力用のオブジェクト 以降typinglogger.debug(...) などで任意の場所からログに簡単に情報を出力できる
-const typingLogger = {  // typingbufferとしてオブジェクトを定義
-    enabled: true,  // フラグ設定 
+const typingLogger = {
+    enabled: true,
     debug(scope, message, payload = {}) {   
-        // scope: ログの出所 message: ログメッセージ payload: 追加情報 
-        // ex)'KanaParser', 'no kana units parsed', { questionIndex: currentQuestionIndex });
         if (!this.enabled) return;
         console.debug(`[${scope}] ${message}`, payload);
     },
@@ -48,16 +45,10 @@ const typingLogger = {  // typingbufferとしてオブジェクトを定義
         console.warn(`[${scope}] ${message}`, payload);
     },
 };
-// あとでこのログを出力させてみる
 
 const normalizeKanaSource = (kanaSource) => {
-    // kanasource : 1. kanaSource 2. currentQuestion.kana(今の問題のかな読み)
-    // 1. の引数を追っていくと、一度normalizeKanaSourceに渡されたデータがkanaSourceとして再度渡されていることが分かる
-    // この関数は引数が配列か文字列化を判定し、配列なら一文字一文字から空白をトリムした配列を、文字列なら空白をトリムし文字列自体を配列に変換した配列を返すフィルターとしての役割であるため、安全のために2回通しても問題ない。
     if (Array.isArray(kanaSource)) {
         return kanaSource.filter((kana) => typeof kana === 'string' && kana.trim().length > 0);
-        // filterメソッド : 配列の各要素に対して、条件に合致するもののみを抽出して新しい配列を作成する
-        // ex)return array.filter((element) => typeof element === 'number' && element > 10);
     }
     if (typeof kanaSource === 'string' && kanaSource.trim().length > 0) {
         return [kanaSource];
