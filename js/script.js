@@ -1,5 +1,7 @@
 import {typingQuestions} from './question.js';
 import {parseKanaUnits, getRomajiCandidatesForUnit} from './romajiDictionary.js';
+// 「テスト」という問題に対して{{[て],[す].[と]}, {[te],[su],[to]}}という候補を返す
+// ローマ字に複数の入力がある場合はその両方を返す
 
 // ====================================
 // グローバル変数・定数の定義
@@ -24,7 +26,7 @@ let resultTimer1 = null;        // 結果画面タイマー1
 let resultTimer2 = null;        // 結果画面タイマー2
 const typingState = {
     units: [],           // パース済みかなユニット
-    currentUnitIdx: 0,   // 現在注目しているユニット
+    currentUnitIdx: 0,   // 現在注目しているユニットのインデックス
     typedBuffer: '',     // 現ユニットの入力済みローマ字
     candidates: [],      // 現ユニットで生き残っている候補
     isLocked: false,     // 候補が一意に決まったら true
@@ -73,11 +75,18 @@ const resetTypingState = () => {
     typingState.isLocked = false;
 };
 
-const initializeTypingState = (units = []) => {
+// パース済みかなユニット配列を受け取った直後のセット(candidateの候補は複数存在)
+const initializeTypingState = (units = []) => { // 初期のかなユニットの空の配列を引数にとる
+    // まずはじめにtypingStateをすべて初期化
     resetTypingState();
+    // 別のメモリにコピーを作成(それをtypingState.unitsに代入する)する
     typingState.units = [...units];
+    // コピー先に要素が存在する場合、、、
     if (typingState.units.length > 0) {
+        // 0番目のユニットに対するローマ字候補を取得しtypingState.candidatesにセット
         typingState.candidates = getRomajiCandidatesForUnit(typingState.units[0]);
+        // ローマ字候補が一つだけなら、typingState.isLockedをtrueにする。そうでなければfalseのまま。
+        // typingState.candidates.length === 1 → それすなわちtureなのでtrueが代入される、そうでなければfalseのまま
         typingState.isLocked = typingState.candidates.length === 1;
     }
 };
@@ -86,17 +95,29 @@ const getNextKeyOptions = () => {
     if (typingState.candidates.length === 0) return [];
     const idx = typingState.typedBuffer.length;
     const options = new Set();
+    // 現在残っているローマ字候補のそれぞれに対して、、、
     typingState.candidates.forEach((candidate) => {
+        // 次に来るべき文字を取得し、
         const nextChar = candidate[idx];
+        // nextCharが存在する場合にoptinsにセット
         if (nextChar) options.add(nextChar);
     });
+    // optionsから配列を作成して返す
     return Array.from(options);
 };
+// 「四」:「shi」「yon」など複数のローマ字候補がある場合、2文字目の候補は「h」と「o」の両方になりそうであるが、この問題は解決済みである。
+// この関数が走るタイミングの前にhandleInputが走り、入力に適さない候補が切り捨てられる。
+// 同じタイミングでtypingState.candidates = survivingCandidates; typingState.isLocked = survivingCandidates.length === 1;が走るためisLockedがtrueになる。
 
+
+
+// 次に打つべきキーをハイライトするための関数
 const updateKeyboardHighlights = () => {
     const activeKeys = document.querySelectorAll('.key.active');
+    // まずはすべてのキーからactiveクラスを削除してリセット
     activeKeys.forEach((key) => key.classList.remove('active'));
 
+    // 次に打つべき候補のローマ字を取得し、nextCharsとして定義
     const nextChars = getNextKeyOptions();
     nextChars.forEach((char) => {
         const targetId = keyIdMap[char] || char.toUpperCase();
@@ -108,6 +129,7 @@ const updateKeyboardHighlights = () => {
 };
 
 const updateChunkIndexFromState = (force = false) => {
+    // 
     const mappedIndex = unitChunkMap[typingState.currentUnitIdx];
     const normalizedIndex = typeof mappedIndex === 'number' ? mappedIndex : chunkedText.length;
     if (force || normalizedIndex !== currentChunkIndex) {
