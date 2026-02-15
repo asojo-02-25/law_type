@@ -132,7 +132,7 @@ const updateKeyboardHighlights = () => {
     });
 };
 
-// 
+// 「今どのチャンクを打っているか」というインデックスを更新する関数
 // デフォルト引数を与えている、デフォルト引数を与えなくても関数呼び出し時にtrue or false の引数を必ず与えることで同様の動作になるが、、、
 // 1. 呼び出し側の責任が増えること(引数を与えなかった場合にundefinedになる) 2. 意図の明確さ の観点からデフォルト引数を与えた方がいい 
 const updateChunkIndexFromState = (force = false) => {
@@ -143,24 +143,34 @@ const updateChunkIndexFromState = (force = false) => {
     // mappedIndexが数値でない場合とはすなわちunitをすべて打ち終わっている場合
     // chunkedText.lengthはchunkedTextの最後のインデックス+1に相当するため、必ず存在しないインデックス(どの文節にも相当しない)になる
     // このときnormalizedIndexはかならずcurrentChunkedIndexと異なる値になる
-    // これ以降はあとで考える 
     const normalizedIndex = typeof mappedIndex === 'number' ? mappedIndex : chunkedText.length;
     // ||が論理演算子 or なので、forceがtrueもしくはnormalizedIndexがcurrentChunkIndexと異なればif以下の処理を実行
     // 左側がtureの場合は右側は評価されない。これを短絡処理という
+    // デフォルト引数がtureの場合(おそらく最終問題以外はtrueで呼び出し)もしくはmappedIndexがcurrentChunkIndex(今何個目の文節をタイプしているか)が異なる場合
+    // currentChunkkIndexは初期は0であり、normalizedIndexはunitChunkMapに対応してひとタイプごとに変化する動的な変数。これを適宜currentChunkIndexと比較して更新している
     if (force || normalizedIndex !== currentChunkIndex) {
         currentChunkIndex = normalizedIndex;
+        // chunkCommittedRomaji : 現在文節で確定済みのローマ字 これを空にする。
         chunkCommittedRomaji = '';
     }
 };
 
+// initializeKanaSourceにより整えられたかなを句読点により分割したチャンクの配列を作成する関数
 const buildKanaChunks = (kanaText) => {
     if (!kanaText) return [];
+    // split :文字列を指定した文字や記号で区切り、区切られた部分を要素として持つ配列を返す。spllt内の正規表現で()を使用することで区切る目印である「、」「。」も要素として保持するようになる。
+    // reduce : 配列の各要素(curr)を順番に処理し、空配列(acc)に値を蓄積していき、最終的に1つの値を返す。第一引数に蓄えていく配列、第二引数に元の配列の各要素をとる。
+    // 冒頭のreturnはbuildKanaChunksの関数の返り値である配列を関数の呼び出し部分に返すためのもの。関数は必ず最後にreturnがないと値を呼び出し元に返すことができない(自動的にundefinedとなる).
     return kanaText.split(/([、。])/).reduce((acc, curr) => {
+        // currが句読点でありかつaccに要素がすでに存在すれば、accの最後の要素に句読点を追加する。
         if (curr.match(/([、。])/) && acc.length > 0) {
             acc[acc.length - 1] += curr;
+            // そうでなければaccに新しい要素としpushする。
         } else if (curr !== '') {
             acc.push(curr);
         }
+        // このreturnはreduceのコールバック関数の返り値であるaccを次のreduceのコールバック関数に渡すためのものである。reduceは配列のすべての要素に対してこの処理を繰り返し、最終的にaccをbuildKanaChunksの返り値として返す。
+        // このreturnがないと次のループでaccが更新されずundefinedとなってしまう。
         return acc;
     }, []);
 };
@@ -192,7 +202,7 @@ const buildUnitsFromChunks = (chunks, fallbackText = '') => {
     // [て, す, と], [0, 0, 0]
 };
 
-// normalizeKanaSource, buildUnitsFromChunks, initializeTypingStates, updateChunkIndexFromStateを走らせて、loggerで初期化結果を出力する関数
+// 1問の問題が開始されるときに走る。normalizeKanaSource, buildUnitsFromChunks, initializeTypingStates, updateChunkIndexFromStateを走らせて状態を初期化し、loggerで初期化結果を出力する関数
 // kanaource : 問題のかな読み(形式を配列にととのえたもの) KanaChunks : 問題のかな読みを読点で区切ったもの
 const primeTypingStateFromKana = (kanaSource, kanaChunks) => {
     // noramlizeKanaSource(kanasource)はprimeTypingStateFromKanaに渡される引数であるkanaSourceにすでに適用されているため本来は不要であるが防御的に実装している。
@@ -212,7 +222,7 @@ const primeTypingStateFromKana = (kanaSource, kanaChunks) => {
     console.log('[primeTypingStateFromKana] units:', units, 'chunkMap:', chunkMap);
     // 作成したunits配列をinitializeTypingStateに渡すことで形式を整える
     initializeTypingState(units);
-    // これわからん、後でメモ
+    // チャンクのインデックスを更新
     updateChunkIndexFromState(true);
     // if以下 : 異常→ログに警告、else以下 : 正常→ログにデバッグ情報を出力
     if (typingState.units.length === 0) {
