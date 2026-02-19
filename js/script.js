@@ -232,13 +232,17 @@ const primeTypingStateFromKana = (kanaSource, kanaChunks) => {
     }
 };
 
+// ミスしたキーを記録する関数。タイプするたびに走るHandleInputの中で呼び出される。
 const recordMissedKeyExpectation = () => {
+    // getNextKeyOptions : 次に来るべきアルファベットのキーを取得する関数
     const nextChars = getNextKeyOptions();
     if (nextChars.length === 0) return;
     const target = nextChars[0].toUpperCase();
+    // MissedKeysMapは初期は{キー1 : 数, キー2 : 数, ...}の形のオブジェクト。
     missedKeysMap[target] = (missedKeysMap[target] || 0) + 1;
 };
 
+// HandleInput内でユニットがすべて正しくタイプされたときに呼ばれ、すべてのユニットを打ち終えているかまだ残っているかにより条件が分岐。
 const finalizeCurrentUnit = () => {
     const completedValue = typingState.typedBuffer;
     chunkCommittedRomaji += completedValue;
@@ -250,6 +254,7 @@ const finalizeCurrentUnit = () => {
     typingState.typedBuffer = '';
 
     const nextUnit = typingState.units[typingState.currentUnitIdx];
+    // すべてのユニットをタイプし終えた場合は次の問題に進む
     if (!nextUnit) {
         typingState.candidates = [];
         typingState.isLocked = false;
@@ -258,6 +263,7 @@ const finalizeCurrentUnit = () => {
         return false;
     }
 
+    // まだ打つべきユニットが存在すれば次のユニットに必要な処理を行う
     typingState.candidates = getRomajiCandidatesForUnit(nextUnit);
     typingState.isLocked = typingState.candidates.length === 1;
     updateChunkIndexFromState();
@@ -265,10 +271,12 @@ const finalizeCurrentUnit = () => {
     return true;
 };
 
+
 const runKanaParserSmokeTest = () => {
     const sample = 'がっこう';
     const parsed = parseKanaUnits(sample);
     const expected = ['が', 'っこ', 'う'];
+    // every : 配列のすべての要素が条件を満たすかどうかを判定するメソッド。配列の各要素に対して、指定した関数を実行し、その関数がすべての要素に対してtrueを返す場合にtrueを返す。
     const isMatch = parsed.length === expected.length && parsed.every((unit, idx) => unit === expected[idx]);
     if (!isMatch) {
         console.warn('[KanaParser] unexpected chunking result', { sample, parsed, expected });
@@ -295,6 +303,8 @@ const keyIdMap = {
     '\\' : 'Backslash',
 };
 
+// keyIdMap のキーと値を入れ替えたオブジェクトを作成
+// Object.entries() : オブジェクトのキーと値のペアを配列の形式で返すメソッド。
 const reverseKeyIdMap = Object.entries(keyIdMap).reduce((acc, [char, id]) => {
     acc[id.toUpperCase()] = char;
     return acc;
@@ -670,6 +680,7 @@ const setupQuestionData = () => {
 // ====================================
 // 入力エンジン (handleInput)
 // ====================================
+
 
 const normalizeInputChar = (char) => {
     if (typeof char !== 'string' || char.length === 0) return '';
