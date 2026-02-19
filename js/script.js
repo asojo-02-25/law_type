@@ -706,6 +706,12 @@ const getSoftKeyChar = (element) => {
 
 const handleInput = (char, source = 'physical') => {
     if (!isGameActive) return;
+
+    // ゲーム開始直後の誤入力を防ぐ (500ms)
+    if (Date.now() - gameStartTime < 500) {
+        return;
+    }
+
     if (!char || typingState.candidates.length === 0) {
         return;
     }
@@ -1167,46 +1173,63 @@ const resetGame = () => {
     keyboardContainer.style.visibility = 'visible';
 
     // 遅延画面アニメーションのリセット
-    delayScreens.forEach((screen) => {
-        screen.getAnimations().forEach((animation) => {
+    try {
+        delayScreens.forEach((screen) => {
+            screen.getAnimations().forEach((animation) => {
+                animation.cancel();
+            });
+            screen.style.opacity = '';
+            screen.style.transform = '';
+        });
+
+        // ゲーム画面のアニメーションリセット
+        questionArea.getAnimations().forEach((animation) => {
             animation.cancel();
         });
-        screen.style.opacity = '';
-        screen.style.transform = '';
-    });
+        questionArea.style.height = '';
+        questionArea.style.margin = '';
+        questionArea.style.opacity = '';
 
-    // ゲーム画面のアニメーションリセット
-    questionArea.getAnimations().forEach((animation) => {
-        animation.cancel();
-    });
-    questionArea.style.height = '';
-    questionArea.style.margin = '';
-    questionArea.style.opacity = '';
-
-    answerArea.getAnimations().forEach((animation) => {
-        animation.cancel();
-    });
-    answerArea.style.height = '';
-
-    keys.forEach((key) => {
-        key.getAnimations().forEach((animation) => {
+        answerArea.getAnimations().forEach((animation) => {
             animation.cancel();
         });
-        key.style.opacity = '';
-    });
+        answerArea.style.height = '';
 
-    inputElement.getAnimations().forEach((animation) => {
-        animation.cancel();
-    });
-    inputElement.style.opacity = '';
+        keys.forEach((key) => {
+            key.getAnimations().forEach((animation) => {
+                animation.cancel();
+            });
+            key.style.opacity = '';
+        });
 
-    // 結果画面の統計アイテムのアニメーションリセット
-    statItems.forEach((item) => {
-        item.getAnimations().forEach((animation) => {
+        inputElement.getAnimations().forEach((animation) => {
             animation.cancel();
         });
-        item.style.opacity = '';
-    });
+        inputElement.style.opacity = '';
+
+        // 結果画面の統計アイテムのアニメーションリセット
+        statItems.forEach((item) => {
+            item.getAnimations().forEach((animation) => {
+                animation.cancel();
+            });
+            item.style.opacity = '';
+        });
+    } catch (e) {
+        console.error('Animation reset failed:', e);
+    } finally {
+        // スタイルの強制リセット (アニメーションキャンセルが失敗しても確実に実行)
+        delayScreens.forEach((screen) => {
+             screen.style.opacity = '';
+             screen.style.transform = '';
+        });
+        questionArea.style.height = '';
+        questionArea.style.margin = '';
+        questionArea.style.opacity = '';
+        answerArea.style.height = '';
+        keys.forEach(key => key.style.opacity = '');
+        inputElement.style.opacity = '';
+        statItems.forEach(item => item.style.opacity = '');
+    }
 
     // 画面の切り替え
     startScreen.style.display = 'block';
@@ -1230,13 +1253,15 @@ document.addEventListener('keydown', (event) => {
     
     // Spaceキーの処理
     if(event.code === 'Space'){
+        // デフォルトのスクロール動作などを防ぐ
+        event.preventDefault();
+        
         if(startScreen.style.display !== 'none'){
-            event.preventDefault();
+            const currentSettings = getGameSettings();
             resetGame();
-            btn.click();
+            startGame(currentSettings);
             return;
         }else if(resultsScreen.style.display !== 'none'){
-            event.preventDefault();
             resetGame();
             const cfg = lastGameSettings || getGameSettings();
             startGame(cfg);
@@ -1246,15 +1271,10 @@ document.addEventListener('keydown', (event) => {
 
     // Escキーでゲーム中断
     if(event.code === 'Escape'){
-        if (gameScreen.style.display !== 'none'){
         event.preventDefault();
+        // どの画面にいてもリセットしてスタート画面へ
         resetGame();
         return;
-        }else if(resultsScreen.style.display !== 'none'){
-            event.preventDefault();
-            resetGame();
-            return;
-        }
     }
 
     // キー入力の判定処理
