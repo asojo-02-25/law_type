@@ -1,3 +1,6 @@
+import {typingQuestions} from './question.js';
+import {parseKanaUnits, getRomajiCandidatesForUnit} from './romajiDictionary.js';
+
 // ====================================
 // グローバル変数・定数の定義
 // ====================================
@@ -5,10 +8,11 @@
 let questionQueue = [];         // 実際に出題される問題のリスト
 let currentQuestionIndex = 0;   // 今何問目か
 let chunkedText = [];           // 日本語を読点で区切ったリスト
-let chunkedRomaji = [];         // ローマ字をカンマで区切ったリスト
+let chunkedKana = [];           // かな読みを読点で区切ったリスト
+let unitChunkMap = [];          // 各ユニットが属する文節のインデックス
 let currentChunkIndex = 0;      // 今何個目の文節を打っているか
-let currentTargetRomaji = '';   // 今打つべきローマ字の文節
-let inputBuffer = '';           // ユーザーが打っている正誤未確定の文節
+let inputBuffer = '';           // 現在文節でユーザーが打ち終えたローマ字
+let chunkCommittedRomaji = '';  // 現在文節で確定済みのローマ字
 let gameStartTime = 0;          // 開始タイムスタンプ
 let correctKeyCount = 0;        // 正解タイプ数
 let missedKeyCount = 0;         // ミスタイプ数
@@ -18,22 +22,208 @@ let resultChartInstance = null; // 結果チャートのインスタンス保持
 let lastGameSettings = null;    // 直近プレイ設定を保持
 let resultTimer1 = null;        // 結果画面タイマー1
 let resultTimer2 = null;        // 結果画面タイマー2
+const typingState = {
+    units: [],           // パース済みかなユニット
+    currentUnitIdx: 0,   // 現在注目しているユニットのインデックス
+    typedBuffer: '',     // 現ユニットの入力済みローマ字
+    candidates: [],      // 現ユニットで生き残っている候補
+    isLocked: false,     // 候補が一意に決まったら true
+};
+
+const typingLogger = {
+    enabled: true,
+    debug(scope, message, payload = {}) {   
+        if (!this.enabled) return;
+        console.debug(`[${scope}] ${message}`, payload);
+    },
+    info(scope, message, payload = {}) {
+        if (!this.enabled) return;
+        console.info(`[${scope}] ${message}`, payload);
+    },
+    warn(scope, message, payload = {}) {
+        if (!this.enabled) return;
+        console.warn(`[${scope}] ${message}`, payload);
+    },
+};
+
+const normalizeKanaSource = (kanaSource) => {
+    if (Array.isArray(kanaSource)) {
+        return kanaSource.filter((kana) => typeof kana === 'string' && kana.trim().length > 0);
+    }
+    if (typeof kanaSource === 'string' && kanaSource.trim().length > 0) {
+        return [kanaSource];
+    }
+    return [];
+};
+
+const resetTypingState = () => {
+    typingState.units = [];
+    typingState.currentUnitIdx = 0;
+    typingState.typedBuffer = '';
+    typingState.candidates = [];
+    typingState.isLocked = false;
+};
+
+const initializeTypingState = (units = []) => {
+    resetTypingState();
+    typingState.units = [...units];
+    if (typingState.units.length > 0) {
+        typingState.candidates = getRomajiCandidatesForUnit(typingState.units[0]);
+        typingState.isLocked = typingState.candidates.length === 1;
+    }
+};
+
+const getNextKeyOptions = () => {
+    if (typingState.candidates.length === 0) return [];
+    const idx = typingState.typedBuffer.length;
+    const options = new Set();
+    typingState.candidates.forEach((candidate) => {
+        const nextChar = candidate[idx];
+        if (nextChar) options.add(nextChar);
+    });
+    return Array.from(options);
+};
+
+const updateKeyboardHighlights = () => {
+    const activeKeys = document.querySelectorAll('.key.active');
+    activeKeys.forEach((key) => key.classList.remove('active'));
+
+    const nextChars = getNextKeyOptions();
+    nextChars.forEach((char) => {
+        const targetId = keyIdMap[char] || char.toUpperCase();
+        const keyElement = document.getElementById(targetId);
+        if (keyElement) {
+            keyElement.classList.add('active');
+        }
+    });
+};
+
+const updateChunkIndexFromState = (force = false) => {
+    const mappedIndex = unitChunkMap[typingState.currentUnitIdx];
+    const normalizedIndex = typeof mappedIndex === 'number' ? mappedIndex : chunkedText.length;
+    if (force || normalizedIndex !== currentChunkIndex) {
+        currentChunkIndex = normalizedIndex;
+        chunkCommittedRomaji = '';
+    }
+};
+
+const buildKanaChunks = (kanaText) => {
+    if (!kanaText) return [];
+    return kanaText.split(/([、。])/).reduce((acc, curr) => {
+        if (curr.match(/([、。])/) && acc.length > 0) {
+            acc[acc.length - 1] += curr;
+        } else if (curr !== '') {
+            acc.push(curr);
+        }
+        return acc;
+    }, []);
+};
+
+const buildUnitsFromChunks = (chunks, fallbackText = '') => {
+    const units = [];
+    const chunkMap = [];
+    if (Array.isArray(chunks) && chunks.length > 0) {
+        chunks.forEach((chunk, chunkIdx) => {
+            const parsed = parseKanaUnits(chunk);
+            parsed.forEach((unit) => {
+                units.push(unit);
+                chunkMap.push(chunkIdx);
+            });
+        });
+    } else if (fallbackText) {
+        const parsed = parseKanaUnits(fallbackText);
+        parsed.forEach((unit) => {
+            units.push(unit);
+            chunkMap.push(0);
+        });
+    }
+    return { units, chunkMap };
+};
+
+const primeTypingStateFromKana = (kanaSource, kanaChunks) => {
+    const kanaList = normalizeKanaSource(kanaSource);
+    const primaryKana = kanaList[0] || '';
+    const { units, chunkMap } = buildUnitsFromChunks(
+        Array.isArray(kanaChunks) && kanaChunks.length === chunkedText.length ? kanaChunks : [],
+        primaryKana
+    );
+    unitChunkMap = chunkMap;
+    initializeTypingState(units);
+    updateChunkIndexFromState(true);
+    if (typingState.units.length === 0) {
+        typingLogger.warn('KanaParser', 'no kana units parsed', { questionIndex: currentQuestionIndex });
+    } else {
+        typingLogger.debug('KanaParser', 'state primed', { units: typingState.units });
+    }
+};
+
+const recordMissedKeyExpectation = () => {
+    const nextChars = getNextKeyOptions();
+    if (nextChars.length === 0) return;
+    const target = nextChars[0].toUpperCase();
+    missedKeysMap[target] = (missedKeysMap[target] || 0) + 1;
+};
+
+const finalizeCurrentUnit = () => {
+    const completedValue = typingState.typedBuffer;
+    chunkCommittedRomaji += completedValue;
+    typingLogger.info('InputEngine', 'unit completed', {
+        unit: typingState.units[typingState.currentUnitIdx],
+        value: completedValue,
+    });
+    typingState.currentUnitIdx += 1;
+    typingState.typedBuffer = '';
+
+    const nextUnit = typingState.units[typingState.currentUnitIdx];
+    if (!nextUnit) {
+        typingState.candidates = [];
+        typingState.isLocked = false;
+        updateKeyboardHighlights();
+        nextQuestion();
+        return false;
+    }
+
+    typingState.candidates = getRomajiCandidatesForUnit(nextUnit);
+    typingState.isLocked = typingState.candidates.length === 1;
+    updateChunkIndexFromState();
+    updateKeyboardHighlights();
+    return true;
+};
+
+const runKanaParserSmokeTest = () => {
+    const sample = 'がっこう';
+    const parsed = parseKanaUnits(sample);
+    const expected = ['が', 'っこ', 'う'];
+    const isMatch = parsed.length === expected.length && parsed.every((unit, idx) => unit === expected[idx]);
+    if (!isMatch) {
+        console.warn('[KanaParser] unexpected chunking result', { sample, parsed, expected });
+    } else {
+        console.debug('[KanaParser] smoke test ok', parsed);
+    }
+};
+
+runKanaParserSmokeTest();
 
 // --- 特殊なidへの対応表
 const keyIdMap = {
     '-' : 'Minus',
-    '^' : 'caret',
+    '^' : 'Caret',
     '￥' : 'Yen',
-    '@' : 'Atmark',
+    '@' : 'AtMark',
     '[' : 'BracketLeft',
-    ';' : 'SemiColon',
+    ';' : 'Semicolon',
     ':' : 'Colon',
     ']' : 'BracketRight',
     ',' : 'Comma',
     '.' : 'Period',
     '/' : 'Slash',
-    '\\' : 'BackSlash',
+    '\\' : 'Backslash',
 };
+
+const reverseKeyIdMap = Object.entries(keyIdMap).reduce((acc, [char, id]) => {
+    acc[id.toUpperCase()] = char;
+    return acc;
+}, {});
 
 // ====================================
 // HTML要素の取得
@@ -56,9 +246,6 @@ const answerArea = document.getElementById('answer-area');
 const keys = document.querySelectorAll('.key');
 const statItems = document.querySelectorAll('.stat-item');
 const keyboardContainer = document.getElementById('keyboard-container');
-
-// --- 問題を格納する配列のインポート ---
-import {typingQuestions} from './question.js';
 
 // ====================================
 // ページロード時の初期化
@@ -250,23 +437,8 @@ const getGameSettings = () => {
 };
 
 // --- タイプべきキーのハイライト ---
-const highlightNextChar = () => {
-    // すでにactiveなキーのリセット
-    const activeKeys = document.querySelectorAll('.key.active');
-    activeKeys.forEach((keys) => {
-        keys.classList.remove('active');
-    });
-
-    // html要素の取得
-    const nextChar = currentTargetRomaji[inputBuffer.length];
-    if(!nextChar) return;
-    
-    // Id の取得 / ターゲット文字のハイライト 
-    const targetId = keyIdMap[nextChar] || nextChar.toUpperCase();
-    const targetElement = document.getElementById(targetId);
-    if(targetElement){
-        targetElement.classList.add('active');
-    }     
+const highlightNextKeys = () => {
+    updateKeyboardHighlights();
 };
 
 // --- 残り問題数の表示更新 ---
@@ -345,14 +517,11 @@ const startGame = (config) => {
     // 問題の出題
     // 問題をシャッフル
     const shuffleArray = (array) => {
-        // もとの配列が壊れないようにコピーを作成(スプレッド構文)
         const cloneArray = [...array];
-        // 後ろから順にランダムな場所に入れ替え--fisher-Yates shuffle
         for(let i = cloneArray.length - 1; i > 0; i--){
             const rand = Math.floor(Math.random() * (i + 1));
             [cloneArray[i], cloneArray[rand]] = [cloneArray[rand], cloneArray[i]];
         };
-        // 次の処理にcloneArrayを渡す
         return cloneArray;
     }
     const shuffledQuestions = shuffleArray(typingQuestions);
@@ -405,20 +574,104 @@ const setupQuestionData = () => {
         return acc;
     },[]);
     
-    // ローマ字をカンマで分割
-    chunkedRomaji = currentQuestion.romaji.split(/([,.])/).reduce((acc, curr) => {
-        if(curr.match(/([,.])/) && acc.length > 0){
-            acc[acc.length - 1] += curr;
-        }else if(curr.trim() !== ''){
-            acc.push(curr.trim());
-        }
-        return acc;
-    },[]);
-
     //インデックスのリセット
     currentChunkIndex = 0;
-    inputBuffer = "";
-    currentTargetRomaji = chunkedRomaji[0];
+    inputBuffer = '';
+    chunkCommittedRomaji = '';
+    const kanaVariants = normalizeKanaSource(currentQuestion.kana);
+    const primaryKana = kanaVariants[0] || '';
+    chunkedKana = buildKanaChunks(primaryKana);
+    if(chunkedKana.length !== chunkedText.length){
+        typingLogger.warn('KanaParser', 'chunk length mismatch', {
+            textChunks: chunkedText.length,
+            kanaChunks: chunkedKana.length,
+            questionId: currentQuestionIndex,
+        });
+    }
+    primeTypingStateFromKana(kanaVariants, chunkedKana);
+    updateKeyboardHighlights();
+};
+
+// ====================================
+// 入力エンジン (handleInput)
+// ====================================
+
+const normalizeInputChar = (char) => {
+    if (typeof char !== 'string' || char.length === 0) return '';
+    if (/[a-z]/i.test(char)) return char.toLowerCase();
+    return char;
+};
+
+const getSoftKeyChar = (element) => {
+    if (!element || !element.id) return '';
+    const normalizedId = element.id.toUpperCase();
+    if (reverseKeyIdMap[normalizedId]) {
+        return normalizeInputChar(reverseKeyIdMap[normalizedId]);
+    }
+    if (element.id.length === 1) {
+        return normalizeInputChar(element.id);
+    }
+    const label = element.textContent ? element.textContent.trim() : '';
+    if (label.length === 1) {
+        return normalizeInputChar(label);
+    }
+    return '';
+};
+
+const handleInput = (char, source = 'physical') => {
+    if (!isGameActive) return;
+
+    // ゲーム開始直後の誤入力を防ぐ (500ms)
+    if (Date.now() - gameStartTime < 500) {
+        return;
+    }
+    
+    if (!char || typingState.candidates.length === 0) {
+        return;
+    }
+
+    const normalizedChar = normalizeInputChar(char);
+    if (!normalizedChar || normalizedChar.length !== 1) return;
+
+    const tentativeBuffer = typingState.typedBuffer + normalizedChar;
+    const survivingCandidates = typingState.candidates.filter((candidate) => candidate.startsWith(tentativeBuffer));
+
+    if (survivingCandidates.length === 0) {
+        missedKeyCount++;
+        recordMissedKeyExpectation();
+        typingLogger.warn('InputEngine', 'miss detected', {
+            source,
+            attempted: normalizedChar,
+            buffer: typingState.typedBuffer,
+            expected: getNextKeyOptions(),
+        });
+        highlightMissedKey(normalizedChar);
+        updateQuestionDisplay();
+        return;
+    }
+
+    typingState.typedBuffer = tentativeBuffer;
+    typingState.candidates = survivingCandidates;
+    typingState.isLocked = survivingCandidates.length === 1;
+    correctKeyCount++;
+
+    typingLogger.debug('InputEngine', 'buffer advanced', {
+        source,
+        buffer: typingState.typedBuffer,
+        candidates: typingState.candidates,
+    });
+
+    const isUnitComplete = survivingCandidates.some((candidate) => candidate === typingState.typedBuffer);
+    if (isUnitComplete) {
+        const staysOnCurrentQuestion = finalizeCurrentUnit();
+        if (staysOnCurrentQuestion) {
+            updateQuestionDisplay();
+        }
+        return;
+    }
+
+    updateKeyboardHighlights();
+    updateQuestionDisplay();
 };
 
 // ====================================
@@ -457,11 +710,11 @@ const updateQuestionDisplay = () => {
         guideElement.textContent = '';
     }
 
+    inputBuffer = chunkCommittedRomaji + typingState.typedBuffer;
     inputElement.textContent = inputBuffer;
 
     // 次入力する文字のハイライト
-    highlightNextChar();
-
+    highlightNextKeys();
     updateRemainingQuestionCount();
 };
 
@@ -470,7 +723,7 @@ const updateQuestionDisplay = () => {
 // ====================================
 
 const nextQuestion = () => {
-    currentQuestionIndex++;     // 次の問題へ
+    currentQuestionIndex++;
 
     // まだ問題があれば表示を更新 なければ終了
     if(currentQuestionIndex < questionQueue.length){
@@ -487,12 +740,12 @@ const nextQuestion = () => {
 
 const finishGame = () => {
     updateRemainingQuestionCount(0);
-    isGameActive = false;       // ゲーム終了フラグ
+    // ゲーム終了フラグ
+    isGameActive = false;
     // 終了タイムスタンプ
     const gameEndTime = Date.now();
     // 経過時間
     const durationSec = (gameEndTime - gameStartTime) / 1000;
-
     // wpm の計算 
     const wpm = durationSec > 0 ? (correctKeyCount / durationSec).toFixed(2) : 0.00;
     // 正答率の計算
@@ -798,15 +1051,17 @@ const resetGame = () => {
     questionQueue = [];         // 実際に出題される問題のリスト
     currentQuestionIndex = 0;   // 今何問目か
     chunkedText = [];           // 日本語を読点で区切ったリスト
-    chunkedRomaji = [];         // ローマ字をカンマで区切ったリスト
+    chunkedKana = [];           // かな読みを読点で区切ったリスト
+    unitChunkMap = [];          // 各ユニットが属する文節のインデックス
     currentChunkIndex = 0;      // 今何個目の文節を打っているか
-    currentTargetRomaji = '';   // 今打つべきローマ字の文節
     inputBuffer = '';           // ユーザーが打っている正誤未確定の文節
+    chunkCommittedRomaji = '';
     gameStartTime = 0;          // 開始タイムスタンプ
     correctKeyCount = 0;        // 正解タイプ数
     missedKeyCount = 0;         // ミスタイプ数
     missedKeysMap = {};         // ミスタイプしたキーを格納するオブジェクト
     isGameActive = false;       // ゲーム進行中フラグ
+    resetTypingState();
     if(resultChartInstance){
         resultChartInstance.destroy();
         resultChartInstance = null;    
@@ -923,41 +1178,29 @@ document.addEventListener('keydown', (event) => {
     }
 
     // キー入力の判定処理
-    // ゲーム中以外は無視
     if(!isGameActive)return;
-    
-    // アルファベットor数字のみを受け付ける簡易フィルタ
-    if(event.key.length === 1){
-        const nextExpectedChar = currentTargetRomaji[inputBuffer.length];
-        if(event.key === nextExpectedChar){
-            correctKeyCount++;
-            inputBuffer += event.key;
-             // 分節の入力完了チェック
-            if(inputBuffer === currentTargetRomaji){
-                currentChunkIndex++;
-                inputBuffer = '';
-                //すべて打ち終わったか
-                if(currentChunkIndex === chunkedRomaji.length){
-                    nextQuestion();
-                    return;
-                }else{
-                    currentTargetRomaji = chunkedRomaji[currentChunkIndex];
-                }
-            }
-        }else{
-            missedKeyCount++
-            // 苦手キーの収集
-            if(nextExpectedChar){
-                const upperChar = nextExpectedChar.toUpperCase();
-                missedKeysMap[upperChar] = (missedKeysMap[upperChar] || 0) + 1;
-            }
 
-            highlightMissedKey(event.key);    
-        }
-        // 画面更新
-        updateQuestionDisplay();
+    if(event.repeat){
+        event.preventDefault();
+        return;
+    }
+
+    if(event.key.length === 1){
+        event.preventDefault();
+        handleInput(event.key, 'physical');
     }
 });
+
+if(keyboardContainer){
+    keyboardContainer.addEventListener('click', (event) => {
+        if(!isGameActive) return;
+        const keyEl = event.target.closest('.key');
+        if(!keyEl) return;
+        const char = getSoftKeyChar(keyEl);
+        if(!char) return;
+        handleInput(char, 'soft');
+    });
+}
 
 // --- ヘッダーのリンク処理 ---
 const navActions = {
