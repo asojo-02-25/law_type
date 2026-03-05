@@ -31,6 +31,7 @@ const typingState = {
     // 'locked'  = 候補が1つに確定
     // 'pending' = 短い候補で一致済みだが長い候補も残っている（保留）
     resolution: 'open',
+    deferredShortPath: null, // 曖昧延長時の短縮形代替パス
 };
 
 const typingLogger = {
@@ -65,6 +66,7 @@ const resetTypingState = () => {
     typingState.typedBuffer = '';
     typingState.candidates = [];
     typingState.resolution = 'open';
+    typingState.deferredShortPath = null;
 };
 
 const initializeTypingState = (units = []) => {
@@ -92,6 +94,18 @@ const getNextKeyOptions = () => {
             const nextCandidates = getRomajiCandidatesForUnit(nextUnit);
             nextCandidates.forEach((c) => {
                 if (c[0]) options.add(c[0]);
+            });
+        }
+
+        // 遅延ショートパス存在時、代替解釈側の次入力文字もハイライト
+        // 例: buffer='nn'(ん), 代替は n(ん)+overflow'n'(な開始) → 'a'もハイライト
+        if (typingState.deferredShortPath && nextUnit) {
+            const nextCandidatesAlt = getRomajiCandidatesForUnit(nextUnit);
+            const overflow = typingState.deferredShortPath.overflowNormalized;
+            nextCandidatesAlt.forEach((c) => {
+                if (c.startsWith(overflow) && c.length > overflow.length) {
+                    options.add(c[overflow.length]);
+                }
             });
         }
     }
@@ -183,6 +197,7 @@ const finalizeCurrentUnit = () => {
     const completedValue = typingState.typedBuffer;
     chunkCommittedRomaji += completedValue;
     typingState.resolution = 'open';
+    typingState.deferredShortPath = null;
     typingLogger.info('InputEngine', 'unit completed', {
         unit: typingState.units[typingState.currentUnitIdx],
         value: completedValue,
@@ -638,9 +653,15 @@ const getSoftKeyChar = (element) => {
 // 保留状態の解決（「ん」の 'n' / 'nn' 表記ゆれ対応）
 // 短い候補（'n'）で一致済みだが長い候補（'nn'）も残っている場合に、
 // 次のキー入力を見てどちらで確定するかを判定する。
+//
+// 曖昧ケース（延長も次ユニット開始も可能）では、延長しつつ
+// 短縮形の代替パス(deferredShortPath)を保存し、さらに次の文字で決定する。
+// 例: 「きんない」→ kinnai(n+na) / kinnnai(nn+na) どちらも許容
 // ============================================================
 const resolvePendingCompletion = (normalizedChar, originalChar, source) => {
     typingState.resolution = 'open';
+    const savedShortPath = typingState.deferredShortPath;
+    typingState.deferredShortPath = null;
 
     // 次のユニットの候補先頭文字と一致するか確認
     const nextUnit = typingState.units[typingState.currentUnitIdx + 1];
@@ -655,20 +676,68 @@ const resolvePendingCompletion = (normalizedChar, originalChar, source) => {
     const extendedCandidates = typingState.candidates.filter((c) => c.startsWith(tentativeBuffer));
     const canExtend = extendedCandidates.length > 0;
 
-    // 優先順位: 次のユニットに進めるなら確定して次へ
-    if (charStartsNextUnit) {
-        typingLogger.debug('InputEngine', 'pending resolved → next unit', {
-            finalized: typingState.typedBuffer,
-            nextChar: normalizedChar,
+    // ─── 遅延ショートパスの解決 ───
+    // 前回、延長(nn)と次ユニット開始(n→な)の両方が可能だったため延長しつつ
+    // 短縮形の代替を保存していた。今回の文字で最終決定する。
+    if (savedShortPath) {
+        // 今回の文字が次ユニットを新たに開始できる → 延長形(nn)で確定
+        if (charStartsNextUnit) {
+            typingLogger.debug('InputEngine', 'deferred → extended form', {
+                finalized: typingState.typedBuffer,
+                nextChar: normalizedChar,
+            });
+            const staysOnCurrentQuestion = finalizeCurrentUnit();
+            if (!staysOnCurrentQuestion) return;
+            handleInput(originalChar, source);
+            return;
+        }
+        // そうでなければ → 短縮形(n)に巻き戻し、溢れ文字+今回の文字を再処理
+        typingLogger.debug('InputEngine', 'deferred → short form', {
+            revertedTo: savedShortPath.shortBuffer,
+            overflowChar: savedShortPath.overflowChar,
+            currentChar: normalizedChar,
         });
+        correctKeyCount--; // 曖昧延長時のカウントを取り消し
+        typingState.typedBuffer = savedShortPath.shortBuffer;
         const staysOnCurrentQuestion = finalizeCurrentUnit();
         if (!staysOnCurrentQuestion) return;
-        // 今回のキーを次のユニットに対して再処理
+        handleInput(savedShortPath.overflowChar, source);
         handleInput(originalChar, source);
         return;
     }
 
-    // 延長可能ならバッファを伸ばす
+    // ─── 曖昧ケース: 延長と次ユニット開始の両方が可能 ───
+    // 延長しつつ短縮形の代替パスを保存して、次の文字に判断を委ねる
+    if (canExtend && charStartsNextUnit) {
+        typingState.typedBuffer = tentativeBuffer;
+        typingState.candidates = extendedCandidates;
+        correctKeyCount++;
+
+        const isComplete = extendedCandidates.some((c) => c === tentativeBuffer);
+        if (isComplete) {
+            // 延長形で一致したが、短縮形+次ユニットの解釈も残す
+            typingState.deferredShortPath = {
+                shortBuffer: tentativeBuffer.slice(0, -normalizedChar.length),
+                overflowChar: originalChar,
+                overflowNormalized: normalizedChar,
+            };
+            typingState.resolution = 'pending';
+        } else {
+            typingState.resolution = extendedCandidates.length === 1 ? 'locked' : 'open';
+        }
+
+        typingLogger.debug('InputEngine', 'pending → ambiguous extend', {
+            buffer: typingState.typedBuffer,
+            candidates: typingState.candidates,
+            hasDeferredShort: !!typingState.deferredShortPath,
+        });
+
+        updateKeyboardHighlights();
+        updateQuestionDisplay();
+        return;
+    }
+
+    // ─── 延長のみ可能 ───
     if (canExtend) {
         typingState.typedBuffer = tentativeBuffer;
         typingState.candidates = extendedCandidates;
@@ -697,7 +766,19 @@ const resolvePendingCompletion = (normalizedChar, originalChar, source) => {
         return;
     }
 
-    // どちらにも該当しない → 現在のユニットを確定し、次のユニットでミス扱い
+    // ─── 次ユニット開始のみ可能 ───
+    if (charStartsNextUnit) {
+        typingLogger.debug('InputEngine', 'pending resolved → next unit', {
+            finalized: typingState.typedBuffer,
+            nextChar: normalizedChar,
+        });
+        const staysOnCurrentQuestion = finalizeCurrentUnit();
+        if (!staysOnCurrentQuestion) return;
+        handleInput(originalChar, source);
+        return;
+    }
+
+    // ─── どちらにも該当しない → ミス ───
     typingLogger.warn('InputEngine', 'pending resolved → miss for next unit', {
         source,
         attempted: normalizedChar,
