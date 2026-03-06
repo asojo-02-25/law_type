@@ -251,10 +251,6 @@ const keyIdMap = {
     '\\' : 'Backslash',
 };
 
-const reverseKeyIdMap = Object.entries(keyIdMap).reduce((acc, [char, id]) => {
-    acc[id.toUpperCase()] = char;
-    return acc;
-}, {});
 
 // ====================================
 // HTML要素の取得
@@ -627,27 +623,14 @@ const setupQuestionData = () => {
 // 入力エンジン (handleInput)
 // ====================================
 
+// 入力を小文字に統一する関数
 const normalizeInputChar = (char) => {
     if (typeof char !== 'string' || char.length === 0) return '';
+    // test() : ()内のオブジェクトが正規表現にマッチするかを判定(ture / false)
     if (/[a-z]/i.test(char)) return char.toLowerCase();
     return char;
 };
 
-const getSoftKeyChar = (element) => {
-    if (!element || !element.id) return '';
-    const normalizedId = element.id.toUpperCase();
-    if (reverseKeyIdMap[normalizedId]) {
-        return normalizeInputChar(reverseKeyIdMap[normalizedId]);
-    }
-    if (element.id.length === 1) {
-        return normalizeInputChar(element.id);
-    }
-    const label = element.textContent ? element.textContent.trim() : '';
-    if (label.length === 1) {
-        return normalizeInputChar(label);
-    }
-    return '';
-};
 
 // ============================================================
 // 保留状態の解決（「ん」の 'n' / 'nn' 表記ゆれ対応）
@@ -658,7 +641,7 @@ const getSoftKeyChar = (element) => {
 // 短縮形の代替パス(deferredShortPath)を保存し、さらに次の文字で決定する。
 // 例: 「きんない」→ kinnai(n+na) / kinnnai(nn+na) どちらも許容
 // ============================================================
-const resolvePendingCompletion = (normalizedChar, originalChar, source) => {
+const resolvePendingCompletion = (normalizedChar, originalChar) => {
     typingState.resolution = 'open';
     const savedShortPath = typingState.deferredShortPath;
     typingState.deferredShortPath = null;
@@ -688,7 +671,7 @@ const resolvePendingCompletion = (normalizedChar, originalChar, source) => {
             });
             const staysOnCurrentQuestion = finalizeCurrentUnit();
             if (!staysOnCurrentQuestion) return;
-            handleInput(originalChar, source);
+            handleInput(originalChar);
             return;
         }
         // そうでなければ → 短縮形(n)に巻き戻し、溢れ文字+今回の文字を再処理
@@ -701,8 +684,8 @@ const resolvePendingCompletion = (normalizedChar, originalChar, source) => {
         typingState.typedBuffer = savedShortPath.shortBuffer;
         const staysOnCurrentQuestion = finalizeCurrentUnit();
         if (!staysOnCurrentQuestion) return;
-        handleInput(savedShortPath.overflowChar, source);
-        handleInput(originalChar, source);
+        handleInput(savedShortPath.overflowChar);
+        handleInput(originalChar);
         return;
     }
 
@@ -774,13 +757,12 @@ const resolvePendingCompletion = (normalizedChar, originalChar, source) => {
         });
         const staysOnCurrentQuestion = finalizeCurrentUnit();
         if (!staysOnCurrentQuestion) return;
-        handleInput(originalChar, source);
+        handleInput(originalChar);
         return;
     }
 
     // ─── どちらにも該当しない → ミス ───
     typingLogger.warn('InputEngine', 'pending resolved → miss for next unit', {
-        source,
         attempted: normalizedChar,
     });
     const staysOnCurrentQuestion = finalizeCurrentUnit();
@@ -791,7 +773,7 @@ const resolvePendingCompletion = (normalizedChar, originalChar, source) => {
     updateQuestionDisplay();
 };
 
-const handleInput = (char, source = 'physical') => {
+const handleInput = (char) => {
     if (!isGameActive) return;
 
     // ゲーム開始直後の誤入力を防ぐ (500ms)
@@ -808,7 +790,7 @@ const handleInput = (char, source = 'physical') => {
 
     // 保留状態が存在する場合は先に解決する
     if (typingState.resolution === 'pending') {
-        resolvePendingCompletion(normalizedChar, char, source);
+        resolvePendingCompletion(normalizedChar, char);
         return;
     }
 
@@ -819,7 +801,6 @@ const handleInput = (char, source = 'physical') => {
         missedKeyCount++;
         recordMissedKeyExpectation();
         typingLogger.warn('InputEngine', 'miss detected', {
-            source,
             attempted: normalizedChar,
             buffer: typingState.typedBuffer,
             expected: getNextKeyOptions(),
@@ -835,7 +816,6 @@ const handleInput = (char, source = 'physical') => {
     correctKeyCount++;
 
     typingLogger.debug('InputEngine', 'buffer advanced', {
-        source,
         buffer: typingState.typedBuffer,
         candidates: typingState.candidates,
     });
@@ -1381,20 +1361,10 @@ document.addEventListener('keydown', (event) => {
 
     if(event.key.length === 1){
         event.preventDefault();
-        handleInput(event.key, 'physical');
+        handleInput(event.key);
     }
 });
 
-if(keyboardContainer){
-    keyboardContainer.addEventListener('click', (event) => {
-        if(!isGameActive) return;
-        const keyEl = event.target.closest('.key');
-        if(!keyEl) return;
-        const char = getSoftKeyChar(keyEl);
-        if(!char) return;
-        handleInput(char, 'soft');
-    });
-}
 
 // --- ヘッダーのリンク処理 ---
 const navActions = {
