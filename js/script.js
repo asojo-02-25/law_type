@@ -641,8 +641,11 @@ const normalizeInputChar = (char) => {
 // 短縮形の代替パス(deferredShortPath)を保存し、さらに次の文字で決定する。
 // 例: 「きんない」→ kinnai(n+na) / kinnnai(nn+na) どちらも許容
 // ============================================================
+
+// handleInput 内で呼び出し(毎文字入力時) normalizedChar : 入力を小文字にしたときの文字 originalChar : もとの入力文字
 const resolvePendingCompletion = (normalizedChar, originalChar) => {
     typingState.resolution = 'open';
+    // deferredShortPath : 前回入力時に入力文字が確定しない場合に入力内容を保存するオブジェクト
     const savedShortPath = typingState.deferredShortPath;
     typingState.deferredShortPath = null;
 
@@ -655,6 +658,7 @@ const resolvePendingCompletion = (normalizedChar, originalChar) => {
     }
 
     // 現在のバッファを延長できるか確認
+    // tentative : 仮の
     const tentativeBuffer = typingState.typedBuffer + normalizedChar;
     const extendedCandidates = typingState.candidates.filter((c) => c.startsWith(tentativeBuffer));
     const canExtend = extendedCandidates.length > 0;
