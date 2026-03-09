@@ -634,12 +634,9 @@ const normalizeInputChar = (char) => {
 
 // ============================================================
 // 保留状態の解決（「ん」の 'n' / 'nn' 表記ゆれ対応）
-// 短い候補（'n'）で一致済みだが長い候補（'nn'）も残っている場合に、
-// 次のキー入力を見てどちらで確定するかを判定する。
-//
-// 曖昧ケース（延長も次ユニット開始も可能）では、延長しつつ
-// 短縮形の代替パス(deferredShortPath)を保存し、さらに次の文字で決定する。
-// 例: 「きんない」→ kinnai(n+na) / kinnnai(nn+na) どちらも許容
+
+// 短い候補（'n'）で一致済みだが長い候補（'nn'）も残っている場合に、次のキー入力を見てどちらで確定するかを判定する。
+// 曖昧ケース（延長も次ユニット開始も可能）では、延長しつつ短縮形の代替パス(deferredShortPath)を保存し、さらに次の文字で決定する。 ex)「きんない」→ kinnai(n+na) / kinnnai(nn+na) どちらも許容
 // ============================================================
 const resolvePendingCompletion = (normalizedChar, originalChar) => {
     typingState.resolution = 'open';
@@ -660,8 +657,7 @@ const resolvePendingCompletion = (normalizedChar, originalChar) => {
     const canExtend = extendedCandidates.length > 0;
 
     // ─── 遅延ショートパスの解決 ───
-    // 前回、延長(nn)と次ユニット開始(n→な)の両方が可能だったため延長しつつ
-    // 短縮形の代替を保存していた。今回の文字で最終決定する。
+    // 前回、延長(nn)と次ユニット開始(n→な)の両方が可能だったため延長しつつ短縮形の代替を保存していた。今回の文字で最終決定する。
     if (savedShortPath) {
         // 今回の文字が次ユニットを新たに開始できる → 延長形(nn)で確定
         if (charStartsNextUnit) {
