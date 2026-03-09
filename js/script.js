@@ -707,27 +707,41 @@ const resolvePendingCompletion = (normalizedChar, originalChar) => {
 
     // ─── 曖昧ケース: 延長と次ユニット開始の両方が可能 ───
     // 延長しつつ短縮形の代替パスを保存して、次の文字に判断を委ねる
+
+    // canExtend : 今回の入力文字を含むtentativeBufferから始まるユニット候補が存在するか(延長可能か)
+    // charStartsNextUnit : 今回の入力文字が次ユニットの候補の先頭文字と一致するか(true / false)(次ユニット開始可能か)
+    // ex) buffer='n'(ん), currentChar='n', tentativeBuffer='nn', extendedCandidates=['nn','nnn'], nextUnitの候補先頭文字が'n' → canExtend=true, charStartsNextUnit=true → 曖昧ケース
     if (canExtend && charStartsNextUnit) {
+        // tentativeBufferで延長した状態をまず反映
         typingState.typedBuffer = tentativeBuffer;
+        // tentativeBufferで始まる候補に絞り込む(一度延長形で一致していると解釈)
         typingState.candidates = extendedCandidates;
         correctKeyCount++;
 
+        // extendedCandidatesの中にtentativeBufferと完全一致する候補があるか
         const isComplete = extendedCandidates.some((c) => c === tentativeBuffer);
+        // 延長形で一致した場合
         if (isComplete) {
-            // 延長形で一致したが、短縮形+次ユニットの解釈も残す
+            // deferredShortPathに、今回の入力で延長した状態から、短縮形に巻き戻すための情報を保存
+            // ex) buffer='nn'(ん), currentChar='n', tentativeBuffer='nn', extendedCandidates=['nn','nnn'], savedShortPath={shortBuffer:'n', overflowChar:'n', overflowNormalized:'n'}
             typingState.deferredShortPath = {
                 shortBuffer: tentativeBuffer.slice(0, -normalizedChar.length),
                 overflowChar: originalChar,
                 overflowNormalized: normalizedChar,
             };
+            // 状態の更新 延長形で暫定させているが、次の入力で確定させるために保留状態にする
             typingState.resolution = 'pending';
+            // 延長形で完全一致しなかった場合 ex) buffer='n'(ん), currentChar='n', tentativeBuffer='nn', extendedCandidates=['n','nny'], nextUnitの候補先頭文字が'n' → canExtend=true, charStartsNextUnit=true → 曖昧ケースだが、延長形で完全一致する候補はないため、保留状態にはせずに次の入力を待つ
         } else {
+            // 完全一致していなため、「保留して次の入力で決定」する段階ではない そのまま追加入力を受け付ける状態にする
+            // 候補が1つに絞り込まれた場合はロック状態にする
             typingState.resolution = extendedCandidates.length === 1 ? 'locked' : 'open';
         }
 
         typingLogger.debug('InputEngine', 'pending → ambiguous extend', {
             buffer: typingState.typedBuffer,
             candidates: typingState.candidates,
+            // !! : savedShortPathが存在する場合はtrue、存在しない場合はfalse (!!後に続くものが存在すればtrue、存在しなければfalse)
             hasDeferredShort: !!typingState.deferredShortPath,
         });
 
