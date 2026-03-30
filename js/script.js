@@ -261,7 +261,6 @@ const startScreen = document.getElementById('start-screen');
 const gameScreen = document.getElementById('game-screen');
 const resultsScreen = document.getElementById('results-screen');
 const delayScreens = document.querySelectorAll('.delay-screen');
-const btn = document.getElementById('start-button');
 const textElement = document.getElementById('question-text');
 const inputElement = document.getElementById('user-input');
 const guideElement = document.getElementById('current-guide');
@@ -274,15 +273,30 @@ const keys = document.querySelectorAll('.key');
 const statItems = document.querySelectorAll('.stat-item');
 const keyboardContainer = document.getElementById('keyboard-container');
 
+const SCREEN = {
+    START: 'start',
+    GAME: 'game',
+    RESULTS: 'results',
+};
+
+let currentScreen = SCREEN.START;
+
+const setVisibleScreen = (screen) => {
+    startScreen.style.display = screen === SCREEN.START ? 'block' : 'none';
+    gameScreen.style.display = screen === SCREEN.GAME ? 'flex' : 'none';
+    resultsScreen.style.display = screen === SCREEN.RESULTS ? 'flex' : 'none';
+    currentScreen = screen;
+};
+
+const isTransitionPhase = () => !isGameActive && currentScreen === SCREEN.GAME;
+
 // ====================================
 // ページロード時の初期化
 // ====================================
 
 // ページ読み込み時に画面状態をリセット
 window.addEventListener('load', () => {
-    startScreen.style.display = 'block';
-    gameScreen.style.display = 'none';
-    resultsScreen.style.display = 'none';
+    setVisibleScreen(SCREEN.START);
 
     // サイドコンテンツを更新
     const history = getStoredHistory();
@@ -565,9 +579,7 @@ const startGame = (config) => {
     updateQuestionDisplay();
 
     // ディスプレイ関連
-    startScreen.style.display = 'none';
-    gameScreen.style.display = 'flex';
-    resultsScreen.style.display = 'none';
+    setVisibleScreen(SCREEN.GAME);
     
     // 問題欄、回答欄の遅延出現
     const keyframes = [
@@ -1187,8 +1199,7 @@ const showResults = (data) => {
     }, 1000)
     
     resultTimer2 = setTimeout(() => {    
-        gameScreen.style.display = 'none';
-        resultsScreen.style.display = 'flex';
+        setVisibleScreen(SCREEN.RESULTS);
         console.log('リザルト画面を表示');
 
         // 画面表示の更新
@@ -1299,9 +1310,7 @@ const resetGame = () => {
     });
 
     // 画面の切り替え
-    startScreen.style.display = 'block';
-    gameScreen.style.display = 'none';
-    resultsScreen.style.display = 'none';
+    setVisibleScreen(SCREEN.START);
 };
 
 // ====================================
@@ -1317,15 +1326,28 @@ form.addEventListener('submit', (event) => {
 
 // --- キーダウンイベント ---
 document.addEventListener('keydown', (event) => {
+    const isNavigationKey = event.code === 'Space' || event.code === 'Escape';
+
+    // 終了演出中のSpace既定動作(スクロール)を抑止して表示崩れを防ぐ
+    if(event.code === 'Space' && isTransitionPhase()){
+        event.preventDefault();
+        return;
+    }
+
+    // 遷移キーの長押しによる多重遷移を防止
+    if(event.repeat && isNavigationKey){
+        event.preventDefault();
+        return;
+    }
     
     // Spaceキーの処理
     if(event.code === 'Space'){
-        if(startScreen.style.display !== 'none'){
+        if(currentScreen === SCREEN.START){
             event.preventDefault();
             resetGame();
-            btn.click();
+            startGame(getGameSettings());
             return;
-        }else if(resultsScreen.style.display !== 'none'){
+        }else if(currentScreen === SCREEN.RESULTS){
             event.preventDefault();
             resetGame();
             const cfg = lastGameSettings || getGameSettings();
@@ -1336,14 +1358,10 @@ document.addEventListener('keydown', (event) => {
 
     // Escキーでゲーム中断
     if(event.code === 'Escape'){
-        if (gameScreen.style.display !== 'none'){
+        if (currentScreen === SCREEN.GAME || currentScreen === SCREEN.RESULTS){
         event.preventDefault();
         resetGame();
         return;
-        }else if(resultsScreen.style.display !== 'none'){
-            event.preventDefault();
-            resetGame();
-            return;
         }
     }
 
@@ -1365,14 +1383,10 @@ document.addEventListener('keydown', (event) => {
 // --- ヘッダーのリンク処理 ---
 const navActions = {
     'nav-home-link': () => {
-        startScreen.style.display = 'block';
-        gameScreen.style.display = 'none';
-        resultsScreen.style.display = 'none';
+        setVisibleScreen(SCREEN.START);
     },
     'nav-results-link': () => {
-        startScreen.style.display = 'none';
-        gameScreen.style.display = 'none';
-        resultsScreen.style.display = 'flex';
+        setVisibleScreen(SCREEN.RESULTS);
         drawResultChart();
         // 最新履歴で数値表示
         const hist = getStoredHistory();
