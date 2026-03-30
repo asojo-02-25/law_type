@@ -22,6 +22,8 @@ let resultChartInstance = null; // 結果チャートのインスタンス保持
 let lastGameSettings = null;    // 直近プレイ設定を保持
 let resultTimer1 = null;        // 結果画面タイマー1
 let resultTimer2 = null;        // 結果画面タイマー2
+let resultTransitionToken = 0;  // 結果遷移の世代トークン
+const trackedUiAnimations = new Set(); // 明示的に追跡するUIアニメーション
 const typingState = {
     units: [],           // パース済みかなユニット
     currentUnitIdx: 0,   // 現在注目しているユニットのインデックス
@@ -527,7 +529,45 @@ const saveToLocalStorage = (data) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
 };
 
+const trackAnimation = (animation) => {
+    if (!animation) return null;
+    trackedUiAnimations.add(animation);
+    animation.finished
+        .then(() => {
+            trackedUiAnimations.delete(animation);
+        })
+        .catch(() => {
+            trackedUiAnimations.delete(animation);
+        });
+    return animation;
+};
+
+const cancelTrackedUiAnimations = () => {
+    trackedUiAnimations.forEach((animation) => {
+        try {
+            animation.cancel();
+        } catch (e) {
+            console.warn('animation cancel failed', e);
+        }
+    });
+    trackedUiAnimations.clear();
+};
+
+const invalidateResultTransitions = () => {
+    resultTransitionToken += 1;
+    if(resultTimer1){
+        clearTimeout(resultTimer1);
+        resultTimer1 = null;
+    }
+    if(resultTimer2){
+        clearTimeout(resultTimer2);
+        resultTimer2 = null;
+    }
+};
+
 const resetGameScreenVisualState = (prepareForStart = false) => {
+    cancelTrackedUiAnimations();
+
     // 前回演出の残留アニメーションをすべて解除する
     delayScreens.forEach((screen) => {
         screen.getAnimations().forEach((animation) => {
@@ -586,6 +626,14 @@ const resetGameScreenVisualState = (prepareForStart = false) => {
 // ====================================
 
 const startGame = (config) => {
+    // staleな結果遷移を必ず無効化
+    invalidateResultTransitions();
+
+    // 多重起動を禁止
+    if (isGameActive || currentScreen !== SCREEN.START) {
+        return;
+    }
+
     // 終了演出(fill: forwards)が残ると初期表示が崩れるため、開始前に強制リセット
     resetGameScreenVisualState(true);
 
@@ -650,7 +698,7 @@ const startGame = (config) => {
     };
 
     for(const screen of delayScreens){
-        screen.animate(keyframes, options);
+        trackAnimation(screen.animate(keyframes, options));
     }
 };
 
@@ -1216,48 +1264,61 @@ const drawResultChart = () => {
 // ====================================
 
 const showResults = (data) => {
+    invalidateResultTransitions();
+    const transitionToken = resultTransitionToken;
+
     resultTimer1 = setTimeout(() => {
-        questionArea.animate([
+        if (transitionToken !== resultTransitionToken || currentScreen !== SCREEN.GAME) {
+            resultTimer1 = null;
+            return;
+        }
+
+        trackAnimation(questionArea.animate([
             {height: '13rem', margin: '.5rem .25rem .5rem .25rem', opacity: 1},
             {height: '0rem', margin: '0 .25rem 0 .25rem', opacity: 0},
         ],{
             duration: 400,
             fill: 'forwards',
             transformOrigin: 'top',
-        });
+        }));
 
-        answerArea.animate([
+        trackAnimation(answerArea.animate([
             {height: '8rem'},
             {height: '21rem'},
         ],{
             duration: 400,
             fill: 'forwards',
             transformOrigin: 'bottom',
-        });
+        }));
 
         keys.forEach((key) => {
-            key.animate([
+            trackAnimation(key.animate([
                 {opacity: 1, offset: 0},
                 {opacity: 0.8, offset: 0.5},
                 {opacity: 0, offset: 1}
             ],{
                 duration: 400,
                 fill: 'forwards',
-            });
+            }));
         });
 
-        inputElement.animate([
+        trackAnimation(inputElement.animate([
             {opacity: 1},
             {opacity: 0},
         ],{
             duration: 200,
             fill: 'forwards',
-        });
+        }));
 
         resultTimer1 = null;
     }, 1000)
     
     resultTimer2 = setTimeout(() => {    
+        if (transitionToken !== resultTransitionToken || currentScreen !== SCREEN.GAME) {
+            resultTimer2 = null;
+            return;
+        }
+
         setVisibleScreen(SCREEN.RESULTS);
         console.log('リザルト画面を表示');
 
@@ -1269,14 +1330,14 @@ const showResults = (data) => {
         displaySideStats(history);
 
         statItems.forEach((item) => {
-            item.animate([
+            trackAnimation(item.animate([
                 {opacity: 0},
                 {opacity: 1},
             ],{
                 duration: 500,
                 fill: 'forwards',
                 easing: 'ease-in-out',
-            });
+            }));
         });
 
         resultTimer2 = null;
@@ -1304,17 +1365,13 @@ const resetGame = () => {
     missedKeysMap = {};         // ミスタイプしたキーを格納するオブジェクト
     isGameActive = false;       // ゲーム進行中フラグ
     resetTypingState();
+
+    // staleな結果遷移を先に無効化
+    invalidateResultTransitions();
+
     if(resultChartInstance){
         resultChartInstance.destroy();
         resultChartInstance = null;    
-    }
-    if(resultTimer1){
-        clearTimeout(resultTimer1);
-        resultTimer1 = null;
-    }
-    if(resultTimer2){
-        clearTimeout(resultTimer2);
-        resultTimer2 = null;
     }
 
     updateRemainingQuestionCount();
@@ -1342,6 +1399,11 @@ const resetGame = () => {
 // --- フォーム提出 → ゲーム開始 ---
 form.addEventListener('submit', (event) => {
     event.preventDefault();
+
+    if (currentScreen !== SCREEN.START || isGameActive) {
+        return;
+    }
+
     const currentSettings = getGameSettings();
     startGame(currentSettings);
 });
