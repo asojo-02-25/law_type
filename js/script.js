@@ -527,11 +527,64 @@ const saveToLocalStorage = (data) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
 };
 
+const resetGameScreenVisualState = (prepareForStart = false) => {
+    // 前回演出の残留アニメーションをすべて解除する
+    delayScreens.forEach((screen) => {
+        screen.getAnimations().forEach((animation) => {
+            animation.cancel();
+        });
+        if (prepareForStart) {
+            screen.style.opacity = '0';
+            screen.style.transform = 'scale(0)';
+        } else {
+            screen.style.opacity = '';
+            screen.style.transform = '';
+        }
+    });
+
+    questionArea.getAnimations().forEach((animation) => {
+        animation.cancel();
+    });
+    questionArea.style.height = '';
+    questionArea.style.margin = '';
+    questionArea.style.opacity = '';
+    questionArea.style.transform = '';
+
+    answerArea.getAnimations().forEach((animation) => {
+        animation.cancel();
+    });
+    answerArea.style.height = '';
+    answerArea.style.opacity = '';
+    answerArea.style.transform = '';
+
+    keys.forEach((key) => {
+        key.getAnimations().forEach((animation) => {
+            animation.cancel();
+        });
+        key.style.opacity = '';
+    });
+
+    inputElement.getAnimations().forEach((animation) => {
+        animation.cancel();
+    });
+    inputElement.style.opacity = '';
+
+    statItems.forEach((item) => {
+        item.getAnimations().forEach((animation) => {
+            animation.cancel();
+        });
+        item.style.opacity = '';
+    });
+};
+
 // ====================================
 // ゲーム開始 (startGame)
 // ====================================
 
 const startGame = (config) => {
+    // 終了演出(fill: forwards)が残ると初期表示が崩れるため、開始前に強制リセット
+    resetGameScreenVisualState(true);
+
     isGameActive = true;        // ゲーム開始フラグ
     guideElement.style.display = 'block';
 
@@ -1196,6 +1249,8 @@ const showResults = (data) => {
             duration: 200,
             fill: 'forwards',
         });
+
+        resultTimer1 = null;
     }, 1000)
     
     resultTimer2 = setTimeout(() => {    
@@ -1219,6 +1274,8 @@ const showResults = (data) => {
                 easing: 'ease-in-out',
             });
         });
+
+        resultTimer2 = null;
     }, 1500);
 };
 
@@ -1267,47 +1324,8 @@ const resetGame = () => {
     sourceElement.textContent = '';
     keyboardContainer.style.visibility = 'visible';
 
-    // 遅延画面アニメーションのリセット
-    delayScreens.forEach((screen) => {
-        screen.getAnimations().forEach((animation) => {
-            animation.cancel();
-        });
-        screen.style.opacity = '';
-        screen.style.transform = '';
-    });
-
-    // ゲーム画面のアニメーションリセット
-    questionArea.getAnimations().forEach((animation) => {
-        animation.cancel();
-    });
-    questionArea.style.height = '';
-    questionArea.style.margin = '';
-    questionArea.style.opacity = '';
-
-    answerArea.getAnimations().forEach((animation) => {
-        animation.cancel();
-    });
-    answerArea.style.height = '';
-
-    keys.forEach((key) => {
-        key.getAnimations().forEach((animation) => {
-            animation.cancel();
-        });
-        key.style.opacity = '';
-    });
-
-    inputElement.getAnimations().forEach((animation) => {
-        animation.cancel();
-    });
-    inputElement.style.opacity = '';
-
-    // 結果画面の統計アイテムのアニメーションリセット
-    statItems.forEach((item) => {
-        item.getAnimations().forEach((animation) => {
-            animation.cancel();
-        });
-        item.style.opacity = '';
-    });
+    // 表示関連の残留アニメーションを解除
+    resetGameScreenVisualState(false);
 
     // 画面の切り替え
     setVisibleScreen(SCREEN.START);
