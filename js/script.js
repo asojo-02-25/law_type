@@ -763,9 +763,9 @@ const startGame = (config) => {
     missedKeysMap = {};
     gameStartTime = Date.now();
 
-    if(config.settings.includes('roman-letters-represent')){
-        console.log("ローマ字を表示します");
-    }
+    // if(config.settings.includes('roman-letters-represent')){
+    //     console.log("ローマ字を表示します");
+    // }
     if(keyboardContainer){
         if(config.settings.includes('keyboard-represent')){
             keyboardContainer.style.visibility = 'visible';
