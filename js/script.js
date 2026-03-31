@@ -297,6 +297,37 @@ const SCREEN = {
 
 let currentScreen = SCREEN.START;
 
+const GAME_SCREEN_VISUAL_DEFAULTS = Object.freeze({
+    questionAreaHeight: '12.5rem',
+    questionAreaMargin: '.5rem .25rem .5rem .25rem',
+    answerAreaHeight: '8rem',
+});
+
+const cancelAnimationsOnElement = (element) => {
+    if (!element || typeof element.getAnimations !== 'function') return;
+    element.getAnimations().forEach((animation) => {
+        animation.cancel();
+    });
+};
+
+const normalizeGameScreenAnimatedStyles = () => {
+    questionArea.style.height = GAME_SCREEN_VISUAL_DEFAULTS.questionAreaHeight;
+    questionArea.style.margin = GAME_SCREEN_VISUAL_DEFAULTS.questionAreaMargin;
+    questionArea.style.opacity = '1';
+    questionArea.style.transform = 'none';
+
+    answerArea.style.height = GAME_SCREEN_VISUAL_DEFAULTS.answerAreaHeight;
+    answerArea.style.opacity = '1';
+    answerArea.style.transform = 'none';
+
+    inputElement.style.opacity = '1';
+
+    keys.forEach((key) => {
+        key.style.opacity = '1';
+        key.style.transform = '';
+    });
+};
+
 const setVisibleScreen = (screen) => {
     startScreen.style.display = screen === SCREEN.START ? 'block' : 'none';
     gameScreen.style.display = screen === SCREEN.GAME ? 'flex' : 'none';
@@ -551,6 +582,7 @@ const trackAnimation = (animation, label = 'anonymous') => {
         id,
         label,
         startedAt: performance.now(),
+        state: 'running',
     });
 
     trackedUiAnimations.add(animation);
@@ -562,7 +594,12 @@ const trackAnimation = (animation, label = 'anonymous') => {
 
     animation.finished
         .then(() => {
-            trackedUiAnimations.delete(animation);
+            const meta = trackedAnimationMeta.get(animation) || {};
+            trackedAnimationMeta.set(animation, {
+                ...meta,
+                finishedAt: performance.now(),
+                state: 'finished',
+            });
             animationTrackerLogger.log('finished', {
                 id,
                 label,
@@ -570,7 +607,12 @@ const trackAnimation = (animation, label = 'anonymous') => {
             });
         })
         .catch((error) => {
-            trackedUiAnimations.delete(animation);
+            const meta = trackedAnimationMeta.get(animation) || {};
+            trackedAnimationMeta.set(animation, {
+                ...meta,
+                finishedAt: performance.now(),
+                state: error?.name === 'AbortError' ? 'canceled' : 'error',
+            });
             animationTrackerLogger.log('ended-with-error', {
                 id,
                 label,
@@ -617,6 +659,7 @@ const dumpTrackedUiAnimations = () => {
         rows.push({
             id: meta.id || 'unknown',
             label: meta.label || 'unknown',
+            state: meta.state || 'unknown',
             playState: animation.playState,
             pending: animation.pending,
             currentTime: animation.currentTime,
@@ -659,44 +702,26 @@ const resetGameScreenVisualState = (prepareForStart = false) => {
 
     // 前回演出の残留アニメーションをすべて解除する
     delayScreens.forEach((screen) => {
-        screen.getAnimations().forEach((animation) => {
-            animation.cancel();
-        });
+        cancelAnimationsOnElement(screen);
     });
 
-    questionArea.getAnimations().forEach((animation) => {
-        animation.cancel();
-    });
-    questionArea.style.height = '';
-    questionArea.style.margin = '';
-    questionArea.style.opacity = '';
-    questionArea.style.transform = '';
+    cancelAnimationsOnElement(questionArea);
 
-    answerArea.getAnimations().forEach((animation) => {
-        animation.cancel();
-    });
-    answerArea.style.height = '';
-    answerArea.style.opacity = '';
-    answerArea.style.transform = '';
+    cancelAnimationsOnElement(answerArea);
 
     keys.forEach((key) => {
-        key.getAnimations().forEach((animation) => {
-            animation.cancel();
-        });
-        key.style.opacity = '';
+        cancelAnimationsOnElement(key);
     });
 
-    inputElement.getAnimations().forEach((animation) => {
-        animation.cancel();
-    });
-    inputElement.style.opacity = '';
+    cancelAnimationsOnElement(inputElement);
 
     statItems.forEach((item) => {
-        item.getAnimations().forEach((animation) => {
-            animation.cancel();
-        });
+        cancelAnimationsOnElement(item);
         item.style.opacity = '';
     });
+
+    // 次プレイ開始時の基準値を毎回明示して、前回のforwards効果の残留を断つ
+    normalizeGameScreenAnimatedStyles();
 
     // question/answer は delayScreens に含まれるため、最後に初期表示状態をまとめて適用する
     delayScreens.forEach((screen) => {
@@ -774,6 +799,9 @@ const startGame = (config) => {
 
     // ディスプレイ関連
     setVisibleScreen(SCREEN.GAME);
+
+    // 直前に与えた初期スタイルを確定させ、初回フレーム飛びで遅延表示が崩れるのを防ぐ
+    gameScreen.offsetHeight;
     
     // 問題欄、回答欄の遅延出現
     const keyframes = [
@@ -1362,8 +1390,15 @@ const showResults = (data) => {
             return;
         }
 
+        // 終了演出は毎回同じ開始状態から実行する
+        normalizeGameScreenAnimatedStyles();
+        delayScreens.forEach((screen) => {
+            screen.style.opacity = '1';
+            screen.style.transform = 'scale(1)';
+        });
+
         trackAnimation(questionArea.animate([
-            {height: '13rem', margin: '.5rem .25rem .5rem .25rem', opacity: 1},
+            {height: GAME_SCREEN_VISUAL_DEFAULTS.questionAreaHeight, margin: GAME_SCREEN_VISUAL_DEFAULTS.questionAreaMargin, opacity: 1},
             {height: '0rem', margin: '0 .25rem 0 .25rem', opacity: 0},
         ],{
             duration: 400,
@@ -1372,7 +1407,7 @@ const showResults = (data) => {
         }), 'result:question-area');
 
         trackAnimation(answerArea.animate([
-            {height: '8rem'},
+            {height: GAME_SCREEN_VISUAL_DEFAULTS.answerAreaHeight},
             {height: '21rem'},
         ],{
             duration: 400,
