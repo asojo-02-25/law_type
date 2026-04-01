@@ -763,9 +763,9 @@ const startGame = (config) => {
     missedKeysMap = {};
     gameStartTime = Date.now();
 
-    if(config.settings.includes('roman-letters-represent')){
-        console.log("ローマ字を表示します");
-    }
+    // if(config.settings.includes('roman-letters-represent')){
+    //     console.log("ローマ字を表示します");
+    // }
     if(keyboardContainer){
         if(config.settings.includes('keyboard-represent')){
             keyboardContainer.style.visibility = 'visible';
@@ -1520,16 +1520,17 @@ const resetGame = () => {
 // イベントリスナー設定
 // ====================================
 
+const resetAndGameStart = (config) => {
+    resetGame();
+    startGame(config);
+};
+
 // --- フォーム提出 → ゲーム開始 ---
 form.addEventListener('submit', (event) => {
     event.preventDefault();
 
-    if (currentScreen !== SCREEN.START || isGameActive) {
-        return;
-    }
-
     const currentSettings = getGameSettings();
-    startGame(currentSettings);
+    resetAndGameStart(currentSettings);
 });
 
 // --- キーダウンイベント ---
@@ -1552,14 +1553,12 @@ document.addEventListener('keydown', (event) => {
     if(event.code === 'Space'){
         if(currentScreen === SCREEN.START){
             event.preventDefault();
-            resetGame();
-            startGame(getGameSettings());
+            resetAndGameStart(getGameSettings());
             return;
         }else if(currentScreen === SCREEN.RESULTS){
             event.preventDefault();
-            resetGame();
             const cfg = lastGameSettings || getGameSettings();
-            startGame(cfg);
+            resetAndGameStart(cfg);
             return;
         }
     }
@@ -1589,11 +1588,19 @@ document.addEventListener('keydown', (event) => {
 
 
 // --- ヘッダーのリンク処理 ---
+const prepareNavigationFromGame = () => {
+    if (isGameActive || currentScreen === SCREEN.GAME) {
+        resetGame();
+    }
+};
+
 const navActions = {
     'nav-home-link': () => {
+        prepareNavigationFromGame();
         setVisibleScreen(SCREEN.START);
     },
     'nav-results-link': () => {
+        prepareNavigationFromGame();
         setVisibleScreen(SCREEN.RESULTS);
         drawResultChart();
         // 最新履歴で数値表示
@@ -1612,7 +1619,6 @@ document.querySelector('.nav').addEventListener('click', (event) => {
     if(!link) return;
 
     event.preventDefault();
-    if(isGameActive) return;
 
     const action = navActions[link.className];
     if(action) action();
