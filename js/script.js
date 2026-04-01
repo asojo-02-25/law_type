@@ -1520,16 +1520,17 @@ const resetGame = () => {
 // イベントリスナー設定
 // ====================================
 
+const resetAndGameStart = (config) => {
+    resetGame();
+    startGame(config);
+};
+
 // --- フォーム提出 → ゲーム開始 ---
 form.addEventListener('submit', (event) => {
     event.preventDefault();
 
-    if (currentScreen !== SCREEN.START || isGameActive) {
-        return;
-    }
-
     const currentSettings = getGameSettings();
-    startGame(currentSettings);
+    resetAndGameStart(currentSettings);
 });
 
 // --- キーダウンイベント ---
@@ -1552,14 +1553,12 @@ document.addEventListener('keydown', (event) => {
     if(event.code === 'Space'){
         if(currentScreen === SCREEN.START){
             event.preventDefault();
-            resetGame();
-            startGame(getGameSettings());
+            resetAndGameStart(getGameSettings());
             return;
         }else if(currentScreen === SCREEN.RESULTS){
             event.preventDefault();
-            resetGame();
             const cfg = lastGameSettings || getGameSettings();
-            startGame(cfg);
+            resetAndGameStart(cfg);
             return;
         }
     }
