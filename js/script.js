@@ -1283,7 +1283,7 @@ const drawResultChart = () => {
                     data: wpmData,
                     borderColor: '#2777f7',
                     backgroundColor: 'rgba(39,119,247,0.1)',
-                    borderWidth: 2,
+                    borderWidth: 0.5,
                     tension: 0,
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: '#2777f7',
@@ -1295,8 +1295,8 @@ const drawResultChart = () => {
                     label: '   正タイプ率   ',
                     data: accuracyData,
                     borderColor: '#ff9f40',
-                    borderWidth: 2,
-                    borderDash: [5,5],
+                    borderWidth: 0.5,
+                    // borderDash: [5,5],
                     tension: 0,
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: '#ff9f40',
@@ -1319,6 +1319,12 @@ const drawResultChart = () => {
             interaction: {
                 mode: 'index',
                 intersect: false,
+            },
+            elements: {
+                point: {
+                    radius: 0,
+                    hoverRadius: 0,
+                }
             },
             scales: {
                 y: {
@@ -1347,15 +1353,17 @@ const drawResultChart = () => {
                     display: true,
                     labels: {
                         usePointStyle: true,
+                        pointStyle: 'line',
                         font: {
                             size: 10,
                         },
-                        boxWidth: 2,
+                        boxWidth: 24,
                         padding: 8,
                         generateLabels: (chart) => {
                             const items = Chart.defaults.plugins.legend.labels.generateLabels(chart);
                             items.forEach((item) => {
-                                item.lineWidth  = 1;
+                                item.pointStyle = 'line';
+                                item.lineWidth  = 2;
                             });
                             return items;
                         },
