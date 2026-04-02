@@ -19,6 +19,7 @@ let missedKeyCount = 0;         // ミスタイプ数
 let missedKeysMap = {};         // ミスタイプしたキーを格納するオブジェクト
 let isGameActive = false;       // ゲーム進行中フラグ
 let resultChartInstance = null; // 結果チャートのインスタンス保持用
+let selectedResultPeriod = 'all'; // 結果グラフの表示期間
 let lastGameSettings = null;    // 直近プレイ設定を保持
 let resultTimer1 = null;        // 結果画面タイマー1
 let resultTimer2 = null;        // 結果画面タイマー2
@@ -288,6 +289,7 @@ const answerArea = document.getElementById('answer-area');
 const keys = document.querySelectorAll('.key');
 const statItems = document.querySelectorAll('.stat-item');
 const keyboardContainer = document.getElementById('keyboard-container');
+const resultPeriodInputs = document.querySelectorAll('input[name="result-period"]');
 
 const SCREEN = {
     START: 'start',
@@ -363,6 +365,47 @@ const getStoredHistory = () => {
         console.error('storage parse error', e);
         return [];
     }
+};
+
+const getHistoryByPeriod = (history, period) => {
+    if (!Array.isArray(history) || history.length === 0) {
+        return [];
+    }
+
+    if (period === '100') {
+        return history.slice(-100);
+    }
+    if (period === '50') {
+        return history.slice(-50);
+    }
+    if (period === '20') {
+        return history.slice(-20);
+    }
+    return history;
+};
+
+const initializeResultPeriodSelector = () => {
+    if (!resultPeriodInputs.length) {
+        return;
+    }
+
+    const checkedInput = Array.from(resultPeriodInputs).find((input) => input.checked);
+    if (checkedInput) {
+        selectedResultPeriod = checkedInput.value;
+    }
+
+    resultPeriodInputs.forEach((input) => {
+        input.addEventListener('change', () => {
+            if (!input.checked) {
+                return;
+            }
+
+            selectedResultPeriod = input.value;
+            if (currentScreen === SCREEN.RESULTS) {
+                drawResultChart();
+            }
+        });
+    });
 };
 
 const computeHistoryMetrics = (history) => {
@@ -1199,13 +1242,17 @@ const finishGame = () => {
 // ====================================
 
 const drawResultChart = () => {
-    const ctx = document.getElementById('result-chart').getContext('2d');
+    const resultChartCanvas = document.getElementById('result-chart');
+    if (!resultChartCanvas) {
+        return;
+    }
+    const ctx = resultChartCanvas.getContext('2d');
 
     // ローカルストレージからデータを取得
     const history = getStoredHistory();
 
-    // 直近15回のデータを取得
-    const recentHistory = history.slice(-15);
+    // 選択された期間のデータを取得
+    const recentHistory = getHistoryByPeriod(history, selectedResultPeriod);
 
     // データセットの作成
     const labels = recentHistory.map(item => {
@@ -1524,6 +1571,8 @@ const resetAndGameStart = (config) => {
     resetGame();
     startGame(config);
 };
+
+initializeResultPeriodSelector();
 
 // --- フォーム提出 → ゲーム開始 ---
 form.addEventListener('submit', (event) => {
