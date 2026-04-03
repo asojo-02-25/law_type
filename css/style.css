@@ -362,7 +362,7 @@ hr{
         background-color: var(--base-color);
         margin: .5rem .25rem .5rem .25rem;
         width: 37.5rem;
-        height : 21rem;
+        height : 19rem;
         border-radius: 12px;
         display: flex;
         flex-direction: column;
@@ -373,9 +373,44 @@ hr{
     .result-graph-wrapper{
         flex: 1;
         min-height: 0;
-        position: relative;
+        display: flex;
+        flex-direction: column;
         width: 100%;
         padding: 0 1rem .5rem 1rem;
+    }
+
+    #result-chart{
+        flex: 1;
+        min-height: 0;
+    }
+
+    .result-period-selector{
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: .375rem;
+    }
+
+    .result-period-selector input[type="radio"]{
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .result-period-selector input[type="radio"] + label{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 5.5rem;
+        box-sizing: border-box;
+        text-align: center;
+        padding: 0 .5rem 0 .5rem;
+        /* border: solid 1.5px #d0dcf3; */
+        /*ホバーしたときに左右に干渉しないよう調整 */
+    }
+
+    .result-period-selector input[type="radio"]:checked + label{
+        border-color: var(--accent-color-2);
     }
 
     .result-data-area{
@@ -394,9 +429,8 @@ hr{
     }
 
     .result-guide{
-        position: absolute;
         width: 100%;
-        transform: translateY(-1.5rem);
+        margin-top: .1rem;
         pointer-events: none;
         white-space: pre-wrap;
     }
