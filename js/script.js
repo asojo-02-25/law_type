@@ -1416,7 +1416,7 @@ const drawResultChart = () => {
                     type: 'linear',
                     display: true,
                     position: 'left',
-                    beginAtZero: true,
+                    // beginAtZero: false,
                     suggestedMax: Math.max(...wpmData, 0) + 1,
                     grid: { color: "#e9f1fd"},
                 },
@@ -1424,8 +1424,12 @@ const drawResultChart = () => {
                     type: 'linear',
                     display: true,
                     position: 'right',
-                    min: 0,
+                    min: 50,
                     max: 100,
+                    ticks: {
+                        stepSize: 10,
+                        precision: 0,
+                    },
                     grid: { display: false },
                 },
                 x: {
