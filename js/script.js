@@ -1395,12 +1395,12 @@ const drawResultChart = () => {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout:{
-                padding: {
-                    top: 8,
-                    bottom: 16,
-                }
-            },
+            // layout:{
+                // padding: {
+                //     top: 4,
+                //     bottom: 0,
+                // }
+            // },
             interaction: {
                 mode: 'index',
                 intersect: false,
