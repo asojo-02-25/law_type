@@ -461,6 +461,12 @@ hr{
         padding-left: 1rem;
     }
 
+    .result-title-with-help{
+        position: relative;
+        display: inline-block;
+        padding: 0 .875rem 0 .875rem;
+    }
+
     .stat-help-anchor{
         position: absolute;
         top: -0.2rem;
