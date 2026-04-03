@@ -438,14 +438,14 @@ const getHistoryByPeriod = (history, period) => {
         return [];
     }
 
+    if (period === '500') {
+        return history.slice(-500);
+    }
     if (period === '100') {
         return history.slice(-100);
     }
     if (period === '50') {
         return history.slice(-50);
-    }
-    if (period === '20') {
-        return history.slice(-20);
     }
     return history;
 };
