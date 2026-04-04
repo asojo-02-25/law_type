@@ -1351,6 +1351,14 @@ const drawResultChart = () => {
     });
     const wpmData = recentHistory.map((item) => Number(item.wpm));
     const accuracyData = recentHistory.map((item) => Number(item.accuracy));
+    const calcAverage = (values) => {
+        if (!Array.isArray(values) || values.length === 0) {
+            return null;
+        }
+        return values.reduce((sum, value) => sum + Number(value), 0) / values.length;
+    };
+    const avgWpm = calcAverage(wpmData);
+    const avgAccuracy = calcAverage(accuracyData);
     
     // チャートの作成
     if(resultChartInstance){
@@ -1502,6 +1510,36 @@ const drawResultChart = () => {
                 ctx.fillText('[%]', y1.right, yPos);
 
                 ctx.restore();
+            }
+        },{
+            // keys/秒 と正タイプ率の平均値ガイド線を描画
+            id: 'averageGuideLines',
+            afterDatasetsDraw: (chart) => {
+                const {ctx, chartArea, scales: {y, y1}} = chart;
+
+                const drawAverageLine = (value, scale, color) => {
+                    if (value === null || !Number.isFinite(value) || !scale) {
+                        return;
+                    }
+
+                    const yPos = scale.getPixelForValue(value);
+                    if (!Number.isFinite(yPos)) {
+                        return;
+                    }
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.setLineDash([4, 3]);
+                    ctx.lineWidth = 0.8;
+                    ctx.strokeStyle = color;
+                    ctx.moveTo(chartArea.left, yPos);
+                    ctx.lineTo(chartArea.right, yPos);
+                    ctx.stroke();
+                    ctx.restore();
+                };
+
+                drawAverageLine(avgWpm, y, 'rgba(39,119,247,0.85)');
+                drawAverageLine(avgAccuracy, y1, 'rgba(255,159,64,0.85)');
             }
         },{
             // 凡例とグラフの間隔を少し広げる
