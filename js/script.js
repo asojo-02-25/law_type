@@ -358,11 +358,77 @@ window.addEventListener('load', () => {
 
 const STORAGE_KEY = 'law_type_play_data';
 
+const MIN_VALID_KEYS_PER_SEC = 2;
+const MIN_VALID_ACCURACY = 70;
+
+const toFiniteNumber = (value) => {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+};
+
+const isValidResultRecord = (record) => {
+    if (!record || typeof record !== 'object') {
+        return false;
+    }
+
+    const wpm = toFiniteNumber(record.wpm);
+    const accuracy = toFiniteNumber(record.accuracy);
+    if (wpm === null || accuracy === null) {
+        return false;
+    }
+
+    return wpm >= MIN_VALID_KEYS_PER_SEC && accuracy >= MIN_VALID_ACCURACY;
+};
+
+const normalizeResultRecord = (record) => {
+    if (!record || typeof record !== 'object') {
+        return null;
+    }
+
+    const wpm = toFiniteNumber(record.wpm);
+    const accuracy = toFiniteNumber(record.accuracy);
+    const dateMs = new Date(record.date).getTime();
+    if (wpm === null || accuracy === null || !Number.isFinite(dateMs)) {
+        return null;
+    }
+
+    const missCount = toFiniteNumber(record.missCount);
+    const duration = toFiniteNumber(record.duration);
+
+    return {
+        date: new Date(dateMs).toISOString(),
+        wpm,
+        missCount: missCount === null ? 0 : missCount,
+        accuracy,
+        weakKey: typeof record.weakKey === 'string' && record.weakKey.length > 0 ? record.weakKey : '特になし',
+        duration: duration === null ? 0 : duration,
+    };
+};
+
+const sanitizeHistoryRecords = (history) => {
+    if (!Array.isArray(history)) {
+        return [];
+    }
+
+    return history
+        .map(normalizeResultRecord)
+        .filter((record) => record && isValidResultRecord(record));
+};
+
 const getStoredHistory = () => {
     try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        const sanitized = sanitizeHistoryRecords(parsed);
+
+        // 既存データも読込時に自己修復して外れ値を物理削除する
+        if (JSON.stringify(parsed) !== JSON.stringify(sanitized)) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+        }
+
+        return sanitized;
     } catch (e) {
         console.error('storage parse error', e);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
         return [];
     }
 };
@@ -372,14 +438,14 @@ const getHistoryByPeriod = (history, period) => {
         return [];
     }
 
+    if (period === '500') {
+        return history.slice(-500);
+    }
     if (period === '100') {
         return history.slice(-100);
     }
     if (period === '50') {
         return history.slice(-50);
-    }
-    if (period === '20') {
-        return history.slice(-20);
     }
     return history;
 };
@@ -409,7 +475,14 @@ const initializeResultPeriodSelector = () => {
 };
 
 const computeHistoryMetrics = (history) => {
-    const count = history.length;
+    const safeHistory = Array.isArray(history)
+        ? history.filter((item) => {
+            const dateMs = new Date(item.date).getTime();
+            return toFiniteNumber(item.wpm) !== null && Number.isFinite(dateMs);
+        })
+        : [];
+
+    const count = safeHistory.length;
     if (count === 0) {
         return {
             recentAvgWpm: 0,
@@ -424,9 +497,9 @@ const computeHistoryMetrics = (history) => {
         };
     }
 
-    const wpms = history.map(h => Number(h.wpm));
+    const wpms = safeHistory.map(h => Number(h.wpm));
     const maxWpm = Math.max(...wpms);
-    const latest = history[count - 1];
+    const latest = safeHistory[count - 1];
     const latestWpm = Number(latest.wpm);
 
     const DAY = 24 * 60 * 60 * 1000;
@@ -434,7 +507,7 @@ const computeHistoryMetrics = (history) => {
 
     const toAvg = (arr) => arr.length > 0 ? arr.reduce((a,b) => a + b, 0) / arr.length : 0;
     const pickWindow = (startMs, endMs) => 
-        history
+        safeHistory
             .map(h => ({ t: new Date(h.date).getTime(), wpm: Number(h.wpm) }))
             .filter(h => h.t >= startMs && h.t <= endMs)
             .map(h => h.wpm);
@@ -452,7 +525,7 @@ const computeHistoryMetrics = (history) => {
     // aside-contents 用データ
     // 総プレイ日数の計算
     const daySet = new Set(
-        history.map(h => {
+        safeHistory.map(h => {
             const d = new Date(h.date);
             const y = d.getFullYear();
             const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -612,9 +685,15 @@ const highlightMissedKey = (char) => {
 
 // --- localStrageへの保存 ---
 const saveToLocalStorage = (data) => {
+    const normalizedData = normalizeResultRecord(data);
+    if (!normalizedData || !isValidResultRecord(normalizedData)) {
+        return false;
+    }
+
     const history = getStoredHistory();
-    history.push(data);
+    history.push(normalizedData);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    return true;
 };
 
 const trackAnimation = (animation, label = 'anonymous') => {
@@ -1223,7 +1302,13 @@ const finishGame = () => {
     };
     
     // データの保存
-    saveToLocalStorage(resultData);
+    const isSaved = saveToLocalStorage(resultData);
+    if (!isSaved) {
+        console.info('outlier result skipped from history', {
+            wpm: resultData.wpm,
+            accuracy: resultData.accuracy,
+        });
+    }
 
     // 画面表示の更新
     document.querySelector('#current-guide').textContent = '';
@@ -1266,6 +1351,14 @@ const drawResultChart = () => {
     });
     const wpmData = recentHistory.map((item) => Number(item.wpm));
     const accuracyData = recentHistory.map((item) => Number(item.accuracy));
+    const calcAverage = (values) => {
+        if (!Array.isArray(values) || values.length === 0) {
+            return null;
+        }
+        return values.reduce((sum, value) => sum + Number(value), 0) / values.length;
+    };
+    const avgWpm = calcAverage(wpmData);
+    const avgAccuracy = calcAverage(accuracyData);
     
     // チャートの作成
     if(resultChartInstance){
@@ -1310,12 +1403,12 @@ const drawResultChart = () => {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout:{
-                padding: {
-                    top: 8,
-                    bottom: 16,
-                }
-            },
+            // layout:{
+                // padding: {
+                //     top: 4,
+                //     bottom: 0,
+                // }
+            // },
             interaction: {
                 mode: 'index',
                 intersect: false,
@@ -1331,7 +1424,7 @@ const drawResultChart = () => {
                     type: 'linear',
                     display: true,
                     position: 'left',
-                    beginAtZero: true,
+                    // beginAtZero: false,
                     suggestedMax: Math.max(...wpmData, 0) + 1,
                     grid: { color: "#e9f1fd"},
                 },
@@ -1339,8 +1432,12 @@ const drawResultChart = () => {
                     type: 'linear',
                     display: true,
                     position: 'right',
-                    min: 0,
+                    min: 50,
                     max: 100,
+                    ticks: {
+                        stepSize: 10,
+                        precision: 0,
+                    },
                     grid: { display: false },
                 },
                 x: {
@@ -1413,6 +1510,36 @@ const drawResultChart = () => {
                 ctx.fillText('[%]', y1.right, yPos);
 
                 ctx.restore();
+            }
+        },{
+            // keys/秒 と正タイプ率の平均値ガイド線を描画
+            id: 'averageGuideLines',
+            afterDatasetsDraw: (chart) => {
+                const {ctx, chartArea, scales: {y, y1}} = chart;
+
+                const drawAverageLine = (value, scale, color) => {
+                    if (value === null || !Number.isFinite(value) || !scale) {
+                        return;
+                    }
+
+                    const yPos = scale.getPixelForValue(value);
+                    if (!Number.isFinite(yPos)) {
+                        return;
+                    }
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.setLineDash([4, 3]);
+                    ctx.lineWidth = 0.8;
+                    ctx.strokeStyle = color;
+                    ctx.moveTo(chartArea.left, yPos);
+                    ctx.lineTo(chartArea.right, yPos);
+                    ctx.stroke();
+                    ctx.restore();
+                };
+
+                drawAverageLine(avgWpm, y, 'rgba(39,119,247,0.85)');
+                drawAverageLine(avgAccuracy, y1, 'rgba(255,159,64,0.85)');
             }
         },{
             // 凡例とグラフの間隔を少し広げる
