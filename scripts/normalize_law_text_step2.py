@@ -47,6 +47,7 @@ OPEN_TO_CLOSE = {
 }
 
 BRACKET_CHARS = "()（）[]［］{}｛｝「」『』〈〉《》【】"
+IGNORED_TEXT_TAGS = {"Rt"}
 
 
 @dataclass(frozen=True)
@@ -82,6 +83,22 @@ def full_text(elem: Optional[ET.Element]) -> str:
     if elem is None:
         return ""
     return "".join(elem.itertext()).strip()
+
+
+def collect_text_excluding_tags(elem: ET.Element, ignored_tags: set[str]) -> str:
+    """Collect text recursively while ignoring text under specific tags (e.g. ruby readings)."""
+    chunks: List[str] = []
+    name = local_name(elem.tag)
+
+    if name not in ignored_tags and elem.text:
+        chunks.append(elem.text)
+
+    for child in list(elem):
+        chunks.append(collect_text_excluding_tags(child, ignored_tags))
+        if child.tail:
+            chunks.append(child.tail)
+
+    return "".join(chunks)
 
 
 def remove_bracket_contents(text: str) -> str:
@@ -185,7 +202,7 @@ def extract_sentences_from_paragraph(paragraph: ET.Element) -> str:
     chunks: List[str] = []
     for elem in paragraph.iter():
         if local_name(elem.tag) == "Sentence":
-            sentence_text = full_text(elem)
+            sentence_text = collect_text_excluding_tags(elem, IGNORED_TEXT_TAGS).strip()
             if sentence_text:
                 chunks.append(sentence_text)
     return "".join(chunks)

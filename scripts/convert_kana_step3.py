@@ -41,6 +41,15 @@ CUSTOM_READING_MAP: Dict[str, str] = {
 }
 
 
+def ensure_terminal_period(text: str) -> str:
+    stripped = text.strip()
+    if not stripped:
+        return stripped
+    if stripped.endswith("。"):
+        return stripped
+    return f"{stripped}。"
+
+
 def normalize_nfkc(text: str) -> str:
     return unicodedata.normalize("NFKC", text)
 
@@ -149,8 +158,9 @@ def main() -> int:
             skipped_invalid += 1
             continue
 
-        text = normalize_nfkc(raw_text)
+        text = ensure_terminal_period(normalize_nfkc(raw_text))
         kana, hits = convert_to_hiragana(text, converter)
+        kana = ensure_terminal_period(kana)
 
         for term, count in hits.items():
             custom_hits_total[term] = custom_hits_total.get(term, 0) + count
