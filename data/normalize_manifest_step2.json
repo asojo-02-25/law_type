@@ -1,0 +1,113 @@
+{
+  "generated_at": "2026-04-08T00:01:06",
+  "input_manifest": "xml_raw/fetch_manifest_step1.json",
+  "output_json": "data/normalized_questions_step2.json",
+  "rules": {
+    "granularity": "paragraph",
+    "skip_article_with_item": true,
+    "normalize_nfkc": true,
+    "remove_bracket_contents": true,
+    "remove_text_contains_go": true,
+    "min_length": 50,
+    "max_length": 130
+  },
+  "summary": {
+    "articles_total": 5345,
+    "articles_skipped_item": 868,
+    "paragraphs_total": 9100,
+    "paragraphs_kept": 4965,
+    "filtered_empty": 0,
+    "filtered_has_bracket": 0,
+    "filtered_contains_go": 403,
+    "filtered_too_short": 2889,
+    "filtered_too_long": 843,
+    "filtered_duplicate": 0
+  },
+  "per_field": {
+    "憲法": {
+      "articles_total": 103,
+      "articles_skipped_item": 2,
+      "paragraphs_total": 158,
+      "paragraphs_kept": 67,
+      "filtered_empty": 0,
+      "filtered_has_bracket": 0,
+      "filtered_contains_go": 0,
+      "filtered_too_short": 88,
+      "filtered_too_long": 3,
+      "filtered_duplicate": 0
+    },
+    "民法": {
+      "articles_total": 1173,
+      "articles_skipped_item": 105,
+      "paragraphs_total": 1744,
+      "paragraphs_kept": 1041,
+      "filtered_empty": 0,
+      "filtered_has_bracket": 0,
+      "filtered_contains_go": 18,
+      "filtered_too_short": 585,
+      "filtered_too_long": 100,
+      "filtered_duplicate": 0
+    },
+    "商法": {
+      "articles_total": 1578,
+      "articles_skipped_item": 466,
+      "paragraphs_total": 2469,
+      "paragraphs_kept": 1340,
+      "filtered_empty": 0,
+      "filtered_has_bracket": 0,
+      "filtered_contains_go": 223,
+      "filtered_too_short": 712,
+      "filtered_too_long": 194,
+      "filtered_duplicate": 0
+    },
+    "民事訴訟法": {
+      "articles_total": 764,
+      "articles_skipped_item": 96,
+      "paragraphs_total": 1454,
+      "paragraphs_kept": 736,
+      "filtered_empty": 0,
+      "filtered_has_bracket": 0,
+      "filtered_contains_go": 60,
+      "filtered_too_short": 520,
+      "filtered_too_long": 138,
+      "filtered_duplicate": 0
+    },
+    "行政法": {
+      "articles_total": 711,
+      "articles_skipped_item": 98,
+      "paragraphs_total": 1676,
+      "paragraphs_kept": 936,
+      "filtered_empty": 0,
+      "filtered_has_bracket": 0,
+      "filtered_contains_go": 46,
+      "filtered_too_short": 428,
+      "filtered_too_long": 266,
+      "filtered_duplicate": 0
+    },
+    "刑法": {
+      "articles_total": 301,
+      "articles_skipped_item": 25,
+      "paragraphs_total": 397,
+      "paragraphs_kept": 191,
+      "filtered_empty": 0,
+      "filtered_has_bracket": 0,
+      "filtered_contains_go": 8,
+      "filtered_too_short": 189,
+      "filtered_too_long": 9,
+      "filtered_duplicate": 0
+    },
+    "刑事訴訟法": {
+      "articles_total": 715,
+      "articles_skipped_item": 76,
+      "paragraphs_total": 1202,
+      "paragraphs_kept": 654,
+      "filtered_empty": 0,
+      "filtered_has_bracket": 0,
+      "filtered_contains_go": 48,
+      "filtered_too_short": 367,
+      "filtered_too_long": 133,
+      "filtered_duplicate": 0
+    }
+  },
+  "output_count": 4965
+}
