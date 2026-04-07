@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-04-08T00:18:36",
+  "input_json": "data/normalized_questions_step2.json",
+  "output_json": "data/questions_step3_kana.json",
+  "rules": {
+    "normalize_nfkc": true,
+    "custom_reading_map": {
+      "遺言": "いごん",
+      "競売": "けいばい",
+      "瑕疵": "かし",
+      "勾留": "こうりゅう"
+    },
+    "converter": "pykakasi"
+  },
+  "summary": {
+    "input_count": 4965,
+    "output_count": 4965,
+    "skipped_invalid": 0,
+    "custom_reading_hits_total": 257,
+    "custom_reading_hits_by_term": {
+      "遺言": 112,
+      "競売": 63,
+      "瑕疵": 7,
+      "勾留": 75
+    }
+  }
+}
