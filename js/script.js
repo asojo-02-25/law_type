@@ -1,4 +1,4 @@
-import {typingQuestions} from './question.js';
+import {typingQuestions as fallbackTypingQuestions} from './question.js';
 import {parseKanaUnits, getRomajiCandidatesForUnit} from './romajiDictionary.js';
 
 // ====================================
@@ -27,6 +27,9 @@ let resultTransitionToken = 0;  // 結果遷移の世代トークン
 const trackedUiAnimations = new Set(); // 明示的に追跡するUIアニメーション
 let trackedAnimationSequence = 0;
 const trackedAnimationMeta = new WeakMap();
+let typingQuestions = [...fallbackTypingQuestions];
+let isQuestionDataReady = false;
+const questionsJsonUrl = new URL('../data/questions.json', import.meta.url);
 
 const animationTrackerLogger = {
     enabled: true,
@@ -66,6 +69,49 @@ const typingLogger = {
         console.warn(`[${scope}] ${message}`, payload);
     },
 };
+
+const normalizeQuestionRecords = (payload) => {
+    const list = Array.isArray(payload)
+        ? payload
+        : (payload && typeof payload === 'object' && Array.isArray(payload.questiondata)
+            ? payload.questiondata
+            : []);
+
+    return list
+        .filter((item) => item && typeof item === 'object')
+        .map((item) => ({
+            text: typeof item.text === 'string' ? item.text.trim() : '',
+            kana: typeof item.kana === 'string' ? item.kana.trim() : '',
+            field: typeof item.field === 'string' ? item.field.trim() : '',
+            source: typeof item.source === 'string' ? item.source.trim() : '',
+        }))
+        .filter((item) => item.text && item.kana && item.field && item.source);
+};
+
+const loadTypingQuestionsFromJson = async () => {
+    try {
+        const response = await fetch(questionsJsonUrl.toString(), {cache: 'no-store'});
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const loaded = normalizeQuestionRecords(payload);
+        if (loaded.length === 0) {
+            throw new Error('no valid question records in data/questions.json');
+        }
+
+        typingQuestions = loaded;
+        console.info('[QuestionLoader] loaded questions.json', {count: typingQuestions.length});
+    } catch (error) {
+        typingQuestions = [...fallbackTypingQuestions];
+        console.warn('[QuestionLoader] fallback to question.js', error);
+    } finally {
+        isQuestionDataReady = true;
+    }
+};
+
+loadTypingQuestionsFromJson();
 
 const normalizeKanaSource = (kanaSource) => {
     if (Array.isArray(kanaSource)) {
@@ -891,6 +937,15 @@ const resetGameScreenVisualState = (prepareForStart = false) => {
 // ====================================
 
 const startGame = (config) => {
+    if (!isQuestionDataReady) {
+        console.warn('[QuestionLoader] question data is still loading');
+        return;
+    }
+    if (!Array.isArray(typingQuestions) || typingQuestions.length === 0) {
+        console.warn('[QuestionLoader] no question data available');
+        return;
+    }
+
     // staleな結果遷移を必ず無効化
     invalidateResultTransitions();
 
