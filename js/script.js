@@ -199,6 +199,47 @@ const updateChunkIndexFromState = (force = false) => {
     }
 };
 
+const escapeHtml = (rawText = '') => {
+    return String(rawText)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+};
+
+const getCompletedKanaLengthInCurrentChunk = () => {
+    const currentGuideChunk = chunkedKana[currentChunkIndex];
+    if (!currentGuideChunk) return 0;
+
+    const safeLimit = Math.min(
+        typingState.currentUnitIdx,
+        typingState.units.length,
+        unitChunkMap.length
+    );
+
+    let completedLength = 0;
+    for (let idx = 0; idx < safeLimit; idx++) {
+        if (unitChunkMap[idx] !== currentChunkIndex) continue;
+        completedLength += Array.from(typingState.units[idx] || '').length;
+    }
+
+    const chunkLength = Array.from(currentGuideChunk).length;
+    return Math.max(0, Math.min(completedLength, chunkLength));
+};
+
+const buildCurrentGuideHtml = () => {
+    const currentGuideChunk = chunkedKana[currentChunkIndex];
+    if (!currentGuideChunk) return '';
+
+    const guideChars = Array.from(currentGuideChunk);
+    const completedLength = getCompletedKanaLengthInCurrentChunk();
+    const completedText = escapeHtml(guideChars.slice(0, completedLength).join(''));
+    const pendingText = escapeHtml(guideChars.slice(completedLength).join(''));
+
+    return `<span class="guide-completed">${completedText}</span><span class="guide-pending">${pendingText}</span>`;
+};
+
 const buildKanaChunks = (kanaText) => {
     if (!kanaText) return [];
     return kanaText.split(/([、。])/).reduce((acc, curr) => {
@@ -1350,9 +1391,9 @@ const updateQuestionDisplay = () => {
         sourceElement.textContent = currentQuestion.source;
     }
 
-    // 今打つべき文節を入力欄の上に表示する
-    if(chunkedText[currentChunkIndex]){
-        guideElement.textContent = chunkedText[currentChunkIndex];
+    // 今打つべきかな文節を入力欄の上に表示する（確定済みユニットのみ太字）
+    if(chunkedKana[currentChunkIndex]){
+        guideElement.innerHTML = buildCurrentGuideHtml();
     }else{
         guideElement.textContent = '';
     }
