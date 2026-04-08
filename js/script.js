@@ -336,6 +336,22 @@ const keys = document.querySelectorAll('.key');
 const statItems = document.querySelectorAll('.stat-item');
 const keyboardContainer = document.getElementById('keyboard-container');
 const resultPeriodInputs = document.querySelectorAll('input[name="result-period"]');
+const navContainer = document.querySelector('.nav');
+
+const hasGameScreenDom = Boolean(
+    form
+    && startScreen
+    && gameScreen
+    && resultsScreen
+    && textElement
+    && inputElement
+    && guideElement
+    && fieldElement
+    && sourceElement
+    && questionArea
+    && answerArea
+    && keyboardContainer
+);
 
 const SCREEN = {
     START: 'start',
@@ -383,6 +399,17 @@ const setVisibleScreen = (screen) => {
     currentScreen = screen;
 };
 
+const showResultsOverview = (history = getStoredHistory()) => {
+    drawResultChart();
+    const latest = history.length
+        ? history[history.length - 1]
+        : { wpm: 0, accuracy: 0, weakKey: '特になし' };
+    displayResultStats(latest);
+    statItems.forEach((item) => {
+        item.style.opacity = 1;
+    });
+};
+
 const isTransitionPhase = () => !isGameActive && currentScreen === SCREEN.GAME;
 
 // ====================================
@@ -391,11 +418,21 @@ const isTransitionPhase = () => !isGameActive && currentScreen === SCREEN.GAME;
 
 // ページ読み込み時に画面状態をリセット
 window.addEventListener('load', () => {
-    setVisibleScreen(SCREEN.START);
-
-    // サイドコンテンツを更新
     const history = getStoredHistory();
     displaySideStats(history);
+
+    if (!hasGameScreenDom) {
+        return;
+    }
+
+    const requestedScreen = new URLSearchParams(window.location.search).get('screen');
+    if (requestedScreen === SCREEN.RESULTS) {
+        setVisibleScreen(SCREEN.RESULTS);
+        showResultsOverview(history);
+        return;
+    }
+
+    setVisibleScreen(SCREEN.START);
 });
 
 // ====================================
@@ -1791,68 +1828,74 @@ const resetAndGameStart = (config) => {
     startGame(config);
 };
 
-initializeResultPeriodSelector();
+if (hasGameScreenDom) {
+    initializeResultPeriodSelector();
+}
 
 // --- フォーム提出 → ゲーム開始 ---
-form.addEventListener('submit', (event) => {
-    event.preventDefault();
+if (form) {
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
 
-    const currentSettings = getGameSettings();
-    resetAndGameStart(currentSettings);
-});
+        const currentSettings = getGameSettings();
+        resetAndGameStart(currentSettings);
+    });
+}
 
 // --- キーダウンイベント ---
-document.addEventListener('keydown', (event) => {
-    const isNavigationKey = event.code === 'Space' || event.code === 'Escape';
+if (hasGameScreenDom) {
+    document.addEventListener('keydown', (event) => {
+        const isNavigationKey = event.code === 'Space' || event.code === 'Escape';
 
-    // 終了演出中のSpace既定動作(スクロール)を抑止して表示崩れを防ぐ
-    if(event.code === 'Space' && isTransitionPhase()){
-        event.preventDefault();
-        return;
-    }
-
-    // 遷移キーの長押しによる多重遷移を防止
-    if(event.repeat && isNavigationKey){
-        event.preventDefault();
-        return;
-    }
-    
-    // Spaceキーの処理
-    if(event.code === 'Space'){
-        if(currentScreen === SCREEN.START){
+        // 終了演出中のSpace既定動作(スクロール)を抑止して表示崩れを防ぐ
+        if(event.code === 'Space' && isTransitionPhase()){
             event.preventDefault();
-            resetAndGameStart(getGameSettings());
-            return;
-        }else if(currentScreen === SCREEN.RESULTS){
-            event.preventDefault();
-            const cfg = lastGameSettings || getGameSettings();
-            resetAndGameStart(cfg);
             return;
         }
-    }
 
-    // Escキーでゲーム中断
-    if(event.code === 'Escape'){
-        if (currentScreen === SCREEN.GAME || currentScreen === SCREEN.RESULTS){
-        event.preventDefault();
-        resetGame();
-        return;
+        // 遷移キーの長押しによる多重遷移を防止
+        if(event.repeat && isNavigationKey){
+            event.preventDefault();
+            return;
         }
-    }
+        
+        // Spaceキーの処理
+        if(event.code === 'Space'){
+            if(currentScreen === SCREEN.START){
+                event.preventDefault();
+                resetAndGameStart(getGameSettings());
+                return;
+            }else if(currentScreen === SCREEN.RESULTS){
+                event.preventDefault();
+                const cfg = lastGameSettings || getGameSettings();
+                resetAndGameStart(cfg);
+                return;
+            }
+        }
 
-    // キー入力の判定処理
-    if(!isGameActive)return;
+        // Escキーでゲーム中断
+        if(event.code === 'Escape'){
+            if (currentScreen === SCREEN.GAME || currentScreen === SCREEN.RESULTS){
+            event.preventDefault();
+            resetGame();
+            return;
+            }
+        }
 
-    if(event.repeat){
-        event.preventDefault();
-        return;
-    }
+        // キー入力の判定処理
+        if(!isGameActive)return;
 
-    if(event.key.length === 1){
-        event.preventDefault();
-        handleInput(event.key);
-    }
-});
+        if(event.repeat){
+            event.preventDefault();
+            return;
+        }
+
+        if(event.key.length === 1){
+            event.preventDefault();
+            handleInput(event.key);
+        }
+    });
+}
 
 
 // --- ヘッダーのリンク処理 ---
@@ -1870,27 +1913,28 @@ const navActions = {
     'nav-results-link': () => {
         prepareNavigationFromGame();
         setVisibleScreen(SCREEN.RESULTS);
-        drawResultChart();
-        // 最新履歴で数値表示
-        const hist = getStoredHistory();
-        const latest = hist.length ? hist[hist.length - 1] : { wpm: 0, accuracy: 0, weakKey: '特になし' };
-        displayResultStats(latest);
-        statItems.forEach((item) => { item.style.opacity = 1; });
+        showResultsOverview();
     },
     'nav-setting-link': () => {
         window.location.href = 'setting.html';
     }
 }
 
-document.querySelector('.nav').addEventListener('click', (event) => {
-    const link = event.target.closest('a[class^="nav-"]');
-    if(!link) return;
+if (navContainer) {
+    navContainer.addEventListener('click', (event) => {
+        const link = event.target.closest('a[class^="nav-"]');
+        if(!link) return;
 
-    event.preventDefault();
+        if (!hasGameScreenDom) {
+            return;
+        }
 
-    const action = navActions[link.className];
-    if(action) action();
-});
+        event.preventDefault();
+
+        const action = navActions[link.className];
+        if(action) action();
+    });
+}
 
 // --- サイドコンテンツの更新 ---
 const displaySideStats = (history) => {
