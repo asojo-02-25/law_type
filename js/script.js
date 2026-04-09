@@ -404,7 +404,7 @@ let currentScreen = SCREEN.START;
 const GAME_SCREEN_VISUAL_DEFAULTS = Object.freeze({
     questionAreaHeight: '12.5rem',
     questionAreaMargin: '0 .25rem 0 .25rem',
-    answerAreaHeight: '8.25rem',
+    answerAreaHeight: '7.25rem',
 });
 
 const cancelAnimationsOnElement = (element) => {
