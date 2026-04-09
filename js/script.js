@@ -1609,7 +1609,7 @@ const drawResultChart = () => {
                         usePointStyle: true,
                         pointStyle: 'line',
                         font: {
-                            size: 10,
+                            size: 12,
                         },
                         boxWidth: 24,
                         padding: 8,
