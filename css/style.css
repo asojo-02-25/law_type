@@ -282,9 +282,10 @@ hr{
         padding: 0 1.75rem 0 1.75rem;
         min-height: 3.5rem;     
     }
-    
+
     #user-input{
     word-break: break-all;
+    letter-spacing: .025rem;
     }
 
     #current-guide .guide-completed{
