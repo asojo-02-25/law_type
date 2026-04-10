@@ -129,11 +129,11 @@ hr{
     /*設定画面*/
     .typing-contents{
         width: 40rem;
-        height: 30.5rem;
+        height: 31rem;
         background-color: var(--base-color-2);
         border-radius: 16px;
         padding: 0.25rem 1rem 0.25rem 1rem;
-        margin: .5rem 1rem .5rem 1rem;
+        margin: 0 1rem .5rem 1rem;
         box-shadow: 0 0 .5rem rgba(0,0,0,0.1), 0 0 1.5rem rgba(0,0,0,0.05);
     }
 
@@ -236,16 +236,20 @@ hr{
     #question-area{
         display: flex;
         flex-direction: column;
-        height: 12.5rem;
+        height: 10.25rem;
+        position: relative;
     }
 
     #question-remaining{
-        padding: 0 1.75rem .25rem 1.75rem;
-        margin-top: auto;
+        position: absolute;
+        right: 1.75rem;
+        bottom: .25rem;
+        /* margin: 0;
+        padding: 0; */
     }
 
     #answer-area{
-        height: 7.25rem;
+        height: 10.5rem;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -268,9 +272,14 @@ hr{
         padding: .25rem 1.75rem .25rem 1.75rem;
     }
 
-    #current-guide{
+    #current-char-guide,
+    #current-guide,
+    #user-input{
+        display: flex;
+        align-items: center;
+        justify-content: center;
         text-align: center;
-        padding: .25rem 1.75rem .25rem 1.75rem;
+        padding: 0 1.75rem 0 1.75rem;
         min-height: 3.5rem;
     }
 
@@ -283,9 +292,6 @@ hr{
     }
 
     #user-input{
-        text-align: center;
-        padding: .25rem 1.75rem .25rem 1.75rem;
-        min-height: 3.5rem;
         width: 100%;
         word-break: break-all;
     }
@@ -533,8 +539,8 @@ hr{
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        gap: .75rem;
-        padding: .75rem 0 .75rem 0;
+        gap: .625rem;
+        padding: .625rem 0 .625rem 0;
     }
     
     #results-screen{
@@ -569,7 +575,7 @@ article{
     background-color: var(--base-color-2);
     border-radius: 16px;
     padding: 0.25rem 1rem 0.25rem 1rem;
-    margin: .5rem 1rem 1rem 1rem;
+    margin: 0 1rem .5rem 1rem;
     box-shadow: 0 0 .5rem rgba(0,0,0,0.1), 0 0 1.5rem rgba(0,0,0,0.05);
     white-space: nowrap;
     overflow: hidden;
