@@ -964,8 +964,6 @@ const displayResultStats = (data) => {
         initialrecentChangeEl.textContent = sign + metrics.initialChange.toFixed(1) + ' %';
         applyChangeStyle(initialrecentChangeEl, metrics.initialChange);
     }
-    if (recentAvgEl) recentAvgEl.textContent = metrics.recentAvgWpm.toFixed(2) + ' keys/秒';
-    if (maxEl) maxEl.textContent = metrics.maxWpm.toFixed(2) + ' keys/秒';
 };
 
 // ====================================
