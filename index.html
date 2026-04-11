@@ -213,6 +213,23 @@
                     </div>
                 </section> 
 
+                <article class="result-history-section" id="result-history-section">
+                    <h1 class="center">履歴</h1>
+                    <p id="law-history-empty" class="center">履歴はまだありません。</p>
+                    <div id="law-history-list" class="law-history-list"></div>
+                    <div id="law-history-pagination" class="law-history-pagination font-small font-bold none-select"></div>
+                </article>
+
+                <template id="law-history-card-template">
+                    <div class="law-history-card">
+                        <div class="law-history-info">
+                            <p class="font-small font-bold">分野 : <span class="info-badge font-small font-white law-history-field"></span></p>
+                            <p class="font-small font-bold">出典 : <span class="info-text font-small law-history-source-text"></span></p>
+                        </div>
+                        <p class="law-history-text"></p>
+                    </div>
+                </template>
+
                 <article>
                     <h1 class="center">プレイデータの保持</h1>
                     <p class="article-contents">

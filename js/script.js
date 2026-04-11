@@ -20,6 +20,8 @@ let missedKeysMap = {};         // ミスタイプしたキーを格納するオ
 let isGameActive = false;       // ゲーム進行中フラグ
 let resultChartInstance = null; // 結果チャートのインスタンス保持用
 let selectedResultPeriod = 'all'; // 結果グラフの表示期間
+let selectedLawHistoryPage = 1; // 法律履歴の表示ページ
+let currentRunTypedHistory = []; // 現在プレイで確定した問題履歴
 let lastGameSettings = null;    // 直近プレイ設定を保持
 let resultTimer1 = null;        // 結果画面タイマー1
 let resultTransitionToken = 0;  // 結果遷移の世代トークン
@@ -39,6 +41,8 @@ const START_FIELD_TO_LABEL_MAP = Object.freeze({
     criminal_procedure: '刑事訴訟法',
 });
 const ALL_START_FIELD_KEYS = Object.freeze(Object.keys(START_FIELD_TO_LABEL_MAP));
+const HISTORY_STORAGE_LIMIT = 100;
+const LAW_HISTORY_PAGE_SIZE = 10;
 
 const animationTrackerLogger = {
     enabled: true,
@@ -388,6 +392,11 @@ const keys = document.querySelectorAll('.key');
 const statItems = document.querySelectorAll('.stat-item');
 const keyboardContainer = document.getElementById('keyboard-container');
 const resultPeriodInputs = document.querySelectorAll('input[name="result-period"]');
+const resultHistorySection = document.getElementById('result-history-section');
+const lawHistoryListElement = document.getElementById('law-history-list');
+const lawHistoryPaginationElement = document.getElementById('law-history-pagination');
+const lawHistoryEmptyElement = document.getElementById('law-history-empty');
+const lawHistoryCardTemplate = document.getElementById('law-history-card-template');
 const navContainer = document.querySelector('.nav');
 
 const hasGameScreenDom = Boolean(
@@ -458,6 +467,7 @@ const showResultsOverview = (history = getStoredHistory()) => {
         ? history[history.length - 1]
         : { wpm: 0, accuracy: 0, weakKey: '特になし' };
     displayResultStats(latest);
+    renderLawHistory(history, 1);
     statItems.forEach((item) => {
         item.style.opacity = 1;
     });
@@ -500,6 +510,7 @@ const filterQuestionsBySelectedFields = (questions, selectedFieldKeys) => {
 window.addEventListener('load', () => {
     const history = getStoredHistory();
     displaySideStats(history);
+    renderLawHistory(history, 1);
 
     if (!hasGameScreenDom) {
         return;
@@ -558,6 +569,17 @@ const normalizeResultRecord = (record) => {
 
     const missCount = toFiniteNumber(record.missCount);
     const duration = toFiniteNumber(record.duration);
+    const rawQuestionHistory = Array.isArray(record.questionHistory)
+        ? record.questionHistory
+        : (Array.isArray(record.questions) ? record.questions : []);
+    const questionHistory = rawQuestionHistory
+        .filter((item) => item && typeof item === 'object')
+        .map((item) => ({
+            field: typeof item.field === 'string' ? item.field.trim() : '',
+            source: typeof item.source === 'string' ? item.source.trim() : '',
+            text: typeof item.text === 'string' ? item.text.trim() : '',
+        }))
+        .filter((item) => item.text.length > 0);
 
     return {
         date: new Date(dateMs).toISOString(),
@@ -566,6 +588,7 @@ const normalizeResultRecord = (record) => {
         accuracy,
         weakKey: typeof record.weakKey === 'string' && record.weakKey.length > 0 ? record.weakKey : '特になし',
         duration: duration === null ? 0 : duration,
+        questionHistory,
     };
 };
 
@@ -583,18 +606,127 @@ const getStoredHistory = () => {
     try {
         const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
         const sanitized = sanitizeHistoryRecords(parsed);
+        const trimmed = sanitized.slice(-HISTORY_STORAGE_LIMIT);
 
         // 既存データも読込時に自己修復して外れ値を物理削除する
-        if (JSON.stringify(parsed) !== JSON.stringify(sanitized)) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+        if (JSON.stringify(parsed) !== JSON.stringify(trimmed)) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
         }
 
-        return sanitized;
+        return trimmed;
     } catch (e) {
         console.error('storage parse error', e);
         localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
         return [];
     }
+};
+
+const flattenLawHistoryEntries = (history) => {
+    if (!Array.isArray(history) || history.length === 0) {
+        return [];
+    }
+
+    const entries = [];
+    for (let idx = history.length - 1; idx >= 0; idx--) {
+        const record = history[idx];
+        if (!record || !Array.isArray(record.questionHistory)) {
+            continue;
+        }
+
+        record.questionHistory.forEach((question) => {
+            if (!question || typeof question !== 'object' || !question.text) {
+                return;
+            }
+            entries.push({
+                field: question.field || '分野未設定',
+                source: question.source || '出典未設定',
+                text: question.text,
+            });
+        });
+    }
+
+    return entries;
+};
+
+const buildCombinedLawHistoryEntries = (history = getStoredHistory()) => {
+    const persistedEntries = flattenLawHistoryEntries(history);
+    const runtimeEntries = currentRunTypedHistory
+        .slice()
+        .reverse()
+        .map((question) => ({
+            field: question.field || '分野未設定',
+            source: question.source || '出典未設定',
+            text: question.text || '',
+        }))
+        .filter((item) => item.text.length > 0);
+
+    return [...runtimeEntries, ...persistedEntries];
+};
+
+const createLawHistoryCardElement = (entry) => {
+    if (!lawHistoryCardTemplate || !(lawHistoryCardTemplate instanceof HTMLTemplateElement)) {
+        return null;
+    }
+
+    const fragment = lawHistoryCardTemplate.content.cloneNode(true);
+    const cardElement = fragment.querySelector('.law-history-card');
+    if (!cardElement) {
+        return null;
+    }
+
+    const fieldElement = cardElement.querySelector('.law-history-field');
+    const sourceElement = cardElement.querySelector('.law-history-source-text');
+    const textElement = cardElement.querySelector('.law-history-text');
+
+    if (fieldElement) fieldElement.textContent = entry.field;
+    if (sourceElement) sourceElement.textContent = entry.source;
+    if (textElement) textElement.textContent = entry.text;
+
+    return cardElement;
+};
+
+const renderLawHistory = (history = getStoredHistory(), requestedPage = selectedLawHistoryPage) => {
+    if (!lawHistoryListElement || !lawHistoryPaginationElement || !lawHistoryEmptyElement || !lawHistoryCardTemplate) {
+        return;
+    }
+
+    const entries = buildCombinedLawHistoryEntries(history);
+    if (entries.length === 0) {
+        selectedLawHistoryPage = 1;
+        lawHistoryListElement.innerHTML = '';
+        lawHistoryPaginationElement.innerHTML = '';
+        lawHistoryEmptyElement.style.display = 'block';
+        return;
+    }
+
+    const totalPages = Math.max(1, Math.ceil(entries.length / LAW_HISTORY_PAGE_SIZE));
+    const safePage = Math.min(Math.max(Number(requestedPage) || 1, 1), totalPages);
+    selectedLawHistoryPage = safePage;
+
+    const startIdx = (safePage - 1) * LAW_HISTORY_PAGE_SIZE;
+    const pageEntries = entries.slice(startIdx, startIdx + LAW_HISTORY_PAGE_SIZE);
+
+    lawHistoryEmptyElement.style.display = 'none';
+    lawHistoryListElement.replaceChildren();
+    pageEntries.forEach((entry) => {
+        const card = createLawHistoryCardElement(entry);
+        if (card) {
+            lawHistoryListElement.appendChild(card);
+        }
+    });
+
+    lawHistoryPaginationElement.replaceChildren();
+    Array.from({length: totalPages}, (_, idx) => idx + 1).forEach((page) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'law-history-page-button';
+        if (page === safePage) {
+            button.classList.add('is-active');
+        }
+        button.dataset.page = String(page);
+        button.textContent = String(page);
+        lawHistoryPaginationElement.appendChild(button);
+    });
 };
 
 const getHistoryByPeriod = (history, period) => {
@@ -635,6 +767,32 @@ const initializeResultPeriodSelector = () => {
                 drawResultChart();
             }
         });
+    });
+};
+
+const initializeLawHistoryPagination = () => {
+    if (!lawHistoryPaginationElement) {
+        return;
+    }
+
+    lawHistoryPaginationElement.addEventListener('click', (event) => {
+        const target = event.target.closest('.law-history-page-button');
+        if (!target) {
+            return;
+        }
+
+        const page = Number(target.dataset.page);
+        if (!Number.isFinite(page)) {
+            return;
+        }
+
+        renderLawHistory(getStoredHistory(), page);
+        if (resultHistorySection) {
+            resultHistorySection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            });
+        }
     });
 };
 
@@ -891,7 +1049,8 @@ const saveToLocalStorage = (data) => {
 
     const history = getStoredHistory();
     history.push(normalizedData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    const trimmedHistory = history.slice(-HISTORY_STORAGE_LIMIT);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmedHistory));
     return true;
 };
 
@@ -1100,7 +1259,9 @@ const startGame = (config) => {
     correctKeyCount = 0;
     missedKeyCount = 0;
     missedKeysMap = {};
+    currentRunTypedHistory = [];
     gameStartTime = Date.now();
+    renderLawHistory(getStoredHistory(), 1);
 
     // if(config.settings.includes('roman-letters-represent')){
     //     console.log("ローマ字を表示します");
@@ -1474,6 +1635,16 @@ const updateQuestionDisplay = () => {
 // ====================================
 
 const nextQuestion = () => {
+    const completedQuestion = questionQueue[currentQuestionIndex];
+    if (completedQuestion && typeof completedQuestion === 'object') {
+        currentRunTypedHistory.push({
+            field: completedQuestion.field,
+            source: completedQuestion.source,
+            text: completedQuestion.text,
+        });
+        renderLawHistory(getStoredHistory(), 1);
+    }
+
     currentQuestionIndex++;
 
     // まだ問題があれば表示を更新 なければ終了
@@ -1524,6 +1695,11 @@ const finishGame = () => {
         accuracy: accuracy,
         weakKey: weakKeys,
         duration: durationSec,
+        questionHistory: currentRunTypedHistory.map((question) => ({
+            field: question.field,
+            source: question.source,
+            text: question.text,
+        })),
     };
     
     // データの保存
@@ -1533,6 +1709,9 @@ const finishGame = () => {
             wpm: resultData.wpm,
             accuracy: resultData.accuracy,
         });
+    } else {
+        // 保存済み履歴と重複させないため、ランタイム履歴は保存成功時にクリアする
+        currentRunTypedHistory = [];
     }
 
     // 画面表示の更新
@@ -1865,6 +2044,7 @@ const showResults = (data) => {
 
                 const history = getStoredHistory();
                 displaySideStats(history);
+                renderLawHistory(history, 1);
 
                 statItems.forEach((item, index) => {
                     trackAnimation(item.animate([
@@ -1903,6 +2083,7 @@ const resetGame = () => {
     missedKeyCount = 0;         // ミスタイプ数
     missedKeysMap = {};         // ミスタイプしたキーを格納するオブジェクト
     isGameActive = false;       // ゲーム進行中フラグ
+    currentRunTypedHistory = [];
     resetTypingState();
 
     // staleな結果遷移を先に無効化
@@ -1931,6 +2112,7 @@ const resetGame = () => {
     // 画面の切り替え
     setVisibleScreen(SCREEN.START);
     clearStartScreenError();
+    renderLawHistory(getStoredHistory(), 1);
 };
 
 // ====================================
@@ -1944,6 +2126,7 @@ const resetAndGameStart = (config) => {
 
 if (hasGameScreenDom) {
     initializeResultPeriodSelector();
+    initializeLawHistoryPagination();
 }
 
 // --- フォーム提出 → ゲーム開始 ---
