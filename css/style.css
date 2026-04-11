@@ -93,6 +93,10 @@ hr{
     margin: .5rem 0 .5rem 0;
 }
 
+.none-select{
+    user-select: none;
+}
+
 /* ヘッダー&ナビゲーションメニュー */
 /* .header-flex{
     display: flex;
@@ -135,7 +139,6 @@ hr{
         padding: 0.25rem 1rem 0.25rem 1rem;
         margin: 0 1rem .5rem 1rem;
         box-shadow: 0 0 .5rem rgba(0,0,0,0.1), 0 0 1.5rem rgba(0,0,0,0.05);
-        user-select: none;
     }
 
     form{
@@ -553,9 +556,9 @@ hr{
         justify-content: flex-start;
         gap: .625rem;
         padding: .625rem 0 .625rem 0;
+        cursor: none;
     }
-    
-    #results-screen{
+        #results-screen{
         display: none;
         flex-direction: column;
         align-items: center;
