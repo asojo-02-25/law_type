@@ -964,8 +964,6 @@ const displayResultStats = (data) => {
         initialrecentChangeEl.textContent = sign + metrics.initialChange.toFixed(1) + ' %';
         applyChangeStyle(initialrecentChangeEl, metrics.initialChange);
     }
-    if (recentAvgEl) recentAvgEl.textContent = metrics.recentAvgWpm.toFixed(2) + ' keys/秒';
-    if (maxEl) maxEl.textContent = metrics.maxWpm.toFixed(2) + ' keys/秒';
 };
 
 // ====================================
@@ -975,7 +973,7 @@ const displayResultStats = (data) => {
 // --- 設定を取得する関数の定義 ---
 const getGameSettings = () => {
     //問題形式
-    const format = document.querySelector('input[name="format"]:checked').value;
+    // const format = document.querySelector('input[name="format"]:checked').value;
     //問題数
     const itemcounts = parseInt(document.querySelector('input[name="itemcounts"]:checked').value);
     //各種設定
@@ -990,7 +988,7 @@ const getGameSettings = () => {
     });
 
     return{
-        mode: format,
+        // mode: format,
         questionCounts: itemcounts,
         settings: options,
         selectedFields,
@@ -2099,6 +2097,7 @@ const resetGame = () => {
     // html要素のリセット
     textElement.innerHTML = '';
     charGuideElement.textContent = '';
+    charGuideElement.style.display = '';
     guideElement.textContent = '';    
     inputElement.textContent = '';
     guideElement.style.display = 'none';
