@@ -315,7 +315,7 @@ hr{
     #keyboard-container{
         display: grid;
         grid-template-columns:repeat(45, 1fr);
-        gap: 2px;
+        gap: 3.5px;
         padding: .5rem 1rem .5rem 1rem;
         height: 7.75rem;
     }
@@ -369,7 +369,7 @@ hr{
         grid-column: 42 / 46;
         height: 28px;
         border-top: none;
-        margin-top: -3px;
+        margin-top: -4.5px;
         border-radius: 0 0 6px 6px;
         position: relative; 
         z-index: 2;
@@ -377,7 +377,7 @@ hr{
     }    
 
     .key.enter-bottom span{
-        transform: translateY(-12px);
+        transform: translateY(-14px);
     }
     .key.active{
         background-color: var(--main-color);
@@ -454,6 +454,68 @@ hr{
         overflow: visible;
         isolation: isolate;
         z-index: 4;
+    }
+
+    .result-history-section{
+        background-color: var(--base-color-2);
+        margin: 1rem 1rem 1rem 1rem;
+        width: 51rem;
+        border-radius: 12px;
+        /* padding: .25rem 1rem .25rem 1rem; */
+    }
+
+    .law-history-info{
+        display: flex;
+        justify-content: space-between;
+        padding: .25rem 1.75rem 0 1.75rem;
+    }
+
+    .law-history-list{
+        display: flex;
+        flex-direction: column;
+        gap: .625rem;
+    }
+
+    .law-history-card{
+        background-color: var(--base-color);
+        border-radius: 12px;
+        /* padding: .5rem 1rem .625rem 1rem; */
+        width: 49rem;
+        height: auto;
+    }
+
+    .law-history-text{
+        padding: .25rem 1.75rem .25rem 1.75rem;
+        word-break: break-word;
+    }
+
+    .law-history-pagination{
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: .375rem;
+        margin-top: .75rem;
+    }
+
+    .law-history-page-button{
+        min-width: 2rem;
+        padding: .125rem .5rem;
+        border-radius: 6px;
+        border: 1.5px solid var(--accent-color-2);
+        background-color: var(--base-color-2);
+        color: var(--font-gray);
+        font-size: .875rem;
+        cursor: pointer;
+    }
+
+    .law-history-page-button.is-active{
+        border-color: var(--main-color);
+        color: var(--main-color);
+        font-weight: bold;
+    }
+
+    #law-history-empty{
+        margin: .25rem 0 .5rem 0;
     }
 
     .result-guide{
@@ -572,7 +634,7 @@ article{
     width: 51rem;
     background-color: var(--base-color-2);
     border-radius: 16px;
-    padding: 0.25rem 1rem 0.25rem 1rem;
+    padding: .25rem 1rem .25rem 1rem;
     margin: 1rem 1rem 1rem 1rem;
     box-shadow: 0 0 .5rem rgba(0,0,0,0.1), 0 0 1.5rem rgba(0,0,0,0.05);
 }
