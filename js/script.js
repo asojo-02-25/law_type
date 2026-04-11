@@ -787,6 +787,12 @@ const initializeLawHistoryPagination = () => {
         }
 
         renderLawHistory(getStoredHistory(), page);
+        if (resultHistorySection) {
+            resultHistorySection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            });
+        }
     });
 };
 
