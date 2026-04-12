@@ -254,8 +254,6 @@ hr{
         position: absolute;
         right: 1.75rem;
         bottom: .25rem;
-        /* margin: 0;
-        padding: 0; */
     }
 
     #answer-area{
@@ -391,7 +389,7 @@ hr{
         background-color: var(--base-color);
         margin: 0 .25rem 0 .25rem;
         width: 49rem;
-        height : 20.5rem;
+        height : 21.375rem;
         border-radius: 12px;
         display: flex;
         flex-direction: column;
@@ -406,6 +404,7 @@ hr{
         flex-direction: column;
         width: 100%;
         padding: 0 1rem .5rem 1rem;
+        gap: .5rem;
     }
 
     #result-chart{
@@ -625,8 +624,8 @@ hr{
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        gap: .75rem;
-        padding: .75rem 0 .75rem 0;
+        gap: .625rem;
+        padding: .625rem 0 .625rem 0;
     }
      
 /*注意書き*/
