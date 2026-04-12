@@ -424,9 +424,8 @@ const SCREEN = {
 let currentScreen = SCREEN.START;
 
 const GAME_SCREEN_VISUAL_DEFAULTS = Object.freeze({
-    questionAreaHeight: '10.25rem',
     questionAreaMargin: '0 .25rem 0 .25rem',
-    answerAreaHeight: '10.5rem',
+    answerAreaExpandedHeight: '21.25rem',
 });
 
 const cancelAnimationsOnElement = (element) => {
@@ -437,12 +436,12 @@ const cancelAnimationsOnElement = (element) => {
 };
 
 const normalizeGameScreenAnimatedStyles = () => {
-    questionArea.style.height = GAME_SCREEN_VISUAL_DEFAULTS.questionAreaHeight;
+    questionArea.style.height = '';
     questionArea.style.margin = '';
     questionArea.style.opacity = '1';
     questionArea.style.transform = 'none';
 
-    answerArea.style.height = GAME_SCREEN_VISUAL_DEFAULTS.answerAreaHeight;
+    answerArea.style.height = '';
     answerArea.style.opacity = '1';
     answerArea.style.transform = 'none';
 
@@ -452,6 +451,14 @@ const normalizeGameScreenAnimatedStyles = () => {
         key.style.opacity = '1';
         key.style.transform = '';
     });
+};
+
+const getElementPixelHeight = (element) => {
+    const measuredHeight = element?.getBoundingClientRect?.().height;
+    if (Number.isFinite(measuredHeight) && measuredHeight >= 0) {
+        return `${measuredHeight}px`;
+    }
+    return '0px';
 };
 
 const setVisibleScreen = (screen) => {
@@ -1984,9 +1991,12 @@ const showResults = (data) => {
             screen.style.transform = 'scale(1)';
         });
 
+        const questionAreaStartHeight = getElementPixelHeight(questionArea);
+        const answerAreaStartHeight = getElementPixelHeight(answerArea);
+
         const questionAreaAnimation = trackAnimation(questionArea.animate([
-            {height: GAME_SCREEN_VISUAL_DEFAULTS.questionAreaHeight, margin: GAME_SCREEN_VISUAL_DEFAULTS.questionAreaMargin, opacity: 1},
-            {height: '0rem', margin: '0 .25rem 0 .25rem', opacity: 0},
+            {height: questionAreaStartHeight, margin: GAME_SCREEN_VISUAL_DEFAULTS.questionAreaMargin, opacity: 1},
+            {height: '0px', margin: '0 .25rem 0 .25rem', opacity: 0},
         ],{
             duration: 400,
             fill: 'forwards',
@@ -1994,8 +2004,8 @@ const showResults = (data) => {
         }), 'result:question-area');
 
         const answerAreaAnimation = trackAnimation(answerArea.animate([
-            {height: GAME_SCREEN_VISUAL_DEFAULTS.answerAreaHeight},
-            {height: '21.25rem'},
+            {height: answerAreaStartHeight},
+            {height: GAME_SCREEN_VISUAL_DEFAULTS.answerAreaExpandedHeight},
         ],{
             duration: 400,
             fill: 'forwards',
