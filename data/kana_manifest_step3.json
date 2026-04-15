@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-13T14:47:16",
+  "generated_at": "2026-04-16T01:02:27",
   "input_json": "data/normalized_questions_step2.json",
   "output_json": "data/questions_step3_kana.json",
   "rules": {
@@ -10,7 +10,10 @@
       "瑕疵": "かし",
       "勾留": "こうりゅう"
     },
-    "converter": "pykakasi"
+    "converter": "sudachipy",
+    "dictionary": "sudachidict_full",
+    "split_mode": "C",
+    "custom_reading_strategy": "term-priority-segmentation"
   },
   "summary": {
     "input_count": 2731,
