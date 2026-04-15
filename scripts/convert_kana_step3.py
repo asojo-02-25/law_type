@@ -11,7 +11,7 @@ Output:
 Rules:
 1. Normalize source text with NFKC before conversion
 2. Apply custom reading map priority before kana conversion
-3. Convert to hiragana with pykakasi
+3. Convert to hiragana with SudachiPy + SudachiDict Full
 """
 
 from __future__ import annotations
@@ -23,13 +23,13 @@ import sys
 import unicodedata
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 try:
-    from pykakasi import kakasi
+    from sudachipy import Dictionary, SplitMode
 except ImportError as exc:
     raise SystemExit(
-        "pykakasi is required. Install with: pip install pykakasi"
+        "SudachiPy and SudachiDict Full are required. Install with: pip install sudachipy sudachidict_full"
     ) from exc
 
 
@@ -39,6 +39,15 @@ CUSTOM_READING_MAP: Dict[str, str] = {
     "瑕疵": "かし",
     "勾留": "こうりゅう",
 }
+CUSTOM_READING_TERMS: Tuple[str, ...] = tuple(sorted(CUSTOM_READING_MAP.keys(), key=len, reverse=True))
+CUSTOM_READING_PATTERN = (
+    re.compile("(" + "|".join(re.escape(term) for term in CUSTOM_READING_TERMS) + ")")
+    if CUSTOM_READING_TERMS
+    else None
+)
+SUDACHI_DICT_TYPE = "full"
+SUDACHI_SPLIT_MODE = SplitMode.C
+SUDACHI_SPLIT_MODE_NAME = "C"
 
 
 def ensure_terminal_period(text: str) -> str:
@@ -54,40 +63,62 @@ def normalize_nfkc(text: str) -> str:
     return unicodedata.normalize("NFKC", text)
 
 
-def mask_custom_terms(text: str) -> Tuple[str, Dict[str, str], Dict[str, int]]:
-    """Replace target terms with placeholders to enforce custom readings."""
-    masked = text
-    placeholders: Dict[str, str] = {}
-    hits: Dict[str, int] = {}
-
-    for idx, term in enumerate(sorted(CUSTOM_READING_MAP.keys(), key=len, reverse=True)):
-        count = masked.count(term)
-        if count == 0:
-            continue
-        placeholder = f"__R{idx}__"
-        masked = masked.replace(term, placeholder)
-        placeholders[placeholder] = CUSTOM_READING_MAP[term]
-        hits[term] = count
-
-    return masked, placeholders, hits
+def katakana_to_hiragana(text: str) -> str:
+    converted: List[str] = []
+    for char in text:
+        code = ord(char)
+        if 0x30A1 <= code <= 0x30F6:
+            converted.append(chr(code - 0x60))
+        else:
+            converted.append(char)
+    return "".join(converted)
 
 
-def apply_placeholders(kana_text: str, placeholders: Dict[str, str]) -> str:
-    restored = kana_text
-    for marker, reading in placeholders.items():
-        restored = restored.replace(marker, reading)
-        restored = restored.replace(marker.lower(), reading)
-        restored = restored.replace(marker.upper(), reading)
-    return restored
+def split_with_custom_terms(text: str) -> List[str]:
+    if not text:
+        return []
+    if CUSTOM_READING_PATTERN is None:
+        return [text]
+    return [part for part in CUSTOM_READING_PATTERN.split(text) if part]
 
 
-def convert_to_hiragana(text: str, converter) -> Tuple[str, Dict[str, int]]:
+def create_tokenizer() -> Any:
+    try:
+        return Dictionary(dict=SUDACHI_DICT_TYPE).create()
+    except Exception as exc:
+        raise SystemExit(
+            "SudachiPy dictionary initialization failed. Install with: pip install sudachipy sudachidict_full"
+        ) from exc
+
+
+def convert_segment_to_hiragana(segment: str, tokenizer: Any) -> str:
+    if not segment:
+        return ""
+
+    converted_tokens: List[str] = []
+    for morpheme in tokenizer.tokenize(segment, SUDACHI_SPLIT_MODE):
+        surface = morpheme.surface()
+        reading = morpheme.reading_form()
+        token_text = reading if isinstance(reading, str) and reading and reading != "*" else surface
+        converted_tokens.append(katakana_to_hiragana(token_text))
+
+    return "".join(converted_tokens)
+
+
+def convert_to_hiragana(text: str, tokenizer: Any) -> Tuple[str, Dict[str, int]]:
     normalized = normalize_nfkc(text)
-    masked, placeholders, hits = mask_custom_terms(normalized)
+    hits: Dict[str, int] = {}
+    converted_parts: List[str] = []
 
-    converted = converter.convert(masked)
-    kana = "".join(token.get("hira", "") for token in converted)
-    kana = apply_placeholders(kana, placeholders)
+    for part in split_with_custom_terms(normalized):
+        custom = CUSTOM_READING_MAP.get(part)
+        if custom is not None:
+            converted_parts.append(custom)
+            hits[part] = hits.get(part, 0) + 1
+            continue
+        converted_parts.append(convert_segment_to_hiragana(part, tokenizer))
+
+    kana = "".join(converted_parts)
     kana = normalize_nfkc(kana)
     kana = re.sub(r"\s+", "", kana)
 
@@ -139,7 +170,7 @@ def main() -> int:
         print("ERROR: input JSON root must be a list", file=sys.stderr)
         return 2
 
-    converter = kakasi()
+    converter = create_tokenizer()
 
     output_records: List[Dict[str, str]] = []
     custom_hits_total: Dict[str, int] = {key: 0 for key in CUSTOM_READING_MAP.keys()}
@@ -191,7 +222,10 @@ def main() -> int:
         "rules": {
             "normalize_nfkc": True,
             "custom_reading_map": CUSTOM_READING_MAP,
-            "converter": "pykakasi",
+            "converter": "sudachipy",
+            "dictionary": "sudachidict_full",
+            "split_mode": SUDACHI_SPLIT_MODE_NAME,
+            "custom_reading_strategy": "term-priority-segmentation",
         },
         "summary": summary,
     }
