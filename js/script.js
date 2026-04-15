@@ -1852,7 +1852,7 @@ const finishGame = () => {
     charGuideElement.style.display = 'none';
     guideElement.textContent = '';
     guideElement.style.display = 'none';
-    document.querySelector('#user-input').textContent = 'finish!';
+    document.querySelector('#charGuideElement').textContent = 'finish!';
     document.querySelectorAll('.key.active').forEach((keys) => {
         keys.classList.remove('active');
     });
