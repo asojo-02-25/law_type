@@ -7,6 +7,7 @@ Input:
 Output:
 - data/questions.json
 - data/finalize_manifest_step4.json
+- data/finalize_invalid_kana_step4.json
 
 The final schema is:
 {
@@ -25,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -32,6 +34,8 @@ from typing import Dict, List, Tuple
 
 
 REQUIRED_KEYS = ("text", "kana", "field", "source")
+ALLOWED_KANA_CHAR_PATTERN = re.compile(r"[ぁ-ゖゝゞー、。]")
+ALLOWED_KANA_DESCRIPTION = "hiragana + ー + 、。"
 
 
 def ensure_terminal_period(text: str) -> str:
@@ -60,6 +64,11 @@ def parse_args() -> argparse.Namespace:
         default="data/finalize_manifest_step4.json",
         help="Step 4 summary manifest path",
     )
+    parser.add_argument(
+        "--output-invalid-kana-json",
+        default="data/finalize_invalid_kana_step4.json",
+        help="Invalid kana records report path",
+    )
     return parser.parse_args()
 
 
@@ -80,6 +89,14 @@ def sanitize_record(raw: Dict[str, object]) -> Dict[str, str] | None:
     }
 
 
+def find_invalid_kana_chars(kana: str) -> List[str]:
+    invalid_chars = {
+        char for char in kana
+        if not ALLOWED_KANA_CHAR_PATTERN.fullmatch(char)
+    }
+    return sorted(invalid_chars)
+
+
 def main() -> int:
     args = parse_args()
     workspace = Path(__file__).resolve().parent.parent
@@ -87,6 +104,7 @@ def main() -> int:
     input_json = (workspace / args.input_json).resolve()
     output_json = (workspace / args.output_json).resolve()
     output_manifest = (workspace / args.output_manifest).resolve()
+    output_invalid_kana_json = (workspace / args.output_invalid_kana_json).resolve()
 
     if not input_json.exists():
         print(f"ERROR: input file not found: {input_json}", file=sys.stderr)
@@ -94,6 +112,7 @@ def main() -> int:
 
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_manifest.parent.mkdir(parents=True, exist_ok=True)
+    output_invalid_kana_json.parent.mkdir(parents=True, exist_ok=True)
 
     try:
         raw = json.loads(input_json.read_text(encoding="utf-8"))
@@ -109,7 +128,10 @@ def main() -> int:
     per_field_counts: Dict[str, int] = {}
     skipped_invalid = 0
     skipped_duplicate = 0
+    skipped_invalid_kana = 0
     seen: set[Tuple[str, str, str]] = set()
+    invalid_kana_records: List[Dict[str, object]] = []
+    invalid_char_counts: Dict[str, int] = {}
 
     for item in raw:
         if not isinstance(item, dict):
@@ -119,6 +141,23 @@ def main() -> int:
         rec = sanitize_record(item)
         if rec is None:
             skipped_invalid += 1
+            continue
+
+        invalid_chars = find_invalid_kana_chars(rec["kana"])
+        if invalid_chars:
+            skipped_invalid_kana += 1
+            invalid_kana_records.append(
+                {
+                    "field": rec["field"],
+                    "source": rec["source"],
+                    "text": rec["text"],
+                    "kana": rec["kana"],
+                    "invalid_chars": invalid_chars,
+                }
+            )
+            for char in rec["kana"]:
+                if char in invalid_chars:
+                    invalid_char_counts[char] = invalid_char_counts.get(char, 0) + 1
             continue
 
         dedupe_key = (rec["field"], rec["source"], rec["text"])
@@ -135,10 +174,26 @@ def main() -> int:
     }
     output_json.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    invalid_kana_payload = {
+        "invalid_kana_records": invalid_kana_records,
+    }
+    output_invalid_kana_json.write_text(
+        json.dumps(invalid_kana_payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    sorted_invalid_char_counts = dict(
+        sorted(
+            invalid_char_counts.items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+    )
+
     summary = {
         "input_count": len(raw),
         "output_count": len(sanitized),
         "skipped_invalid": skipped_invalid,
+        "skipped_invalid_kana": skipped_invalid_kana,
         "skipped_duplicate": skipped_duplicate,
         "per_field_counts": per_field_counts,
     }
@@ -148,6 +203,14 @@ def main() -> int:
         "input_json": str(input_json.relative_to(workspace)).replace("\\", "/"),
         "output_json": str(output_json.relative_to(workspace)).replace("\\", "/"),
         "required_keys": list(REQUIRED_KEYS),
+        "kana_validation": {
+            "enabled": True,
+            "allowed_chars": ALLOWED_KANA_DESCRIPTION,
+            "invalid_kana_output_json": str(output_invalid_kana_json.relative_to(workspace)).replace("\\", "/"),
+            "invalid_kana_record_count": skipped_invalid_kana,
+            "invalid_char_frequency": sorted_invalid_char_counts,
+            "invalid_kana_examples": invalid_kana_records[:20],
+        },
         "summary": summary,
     }
     output_manifest.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -156,10 +219,16 @@ def main() -> int:
     print(f"Input json      : {input_json}")
     print(f"Output json     : {output_json}")
     print(f"Output manifest : {output_manifest}")
+    print(f"Invalid kana report: {output_invalid_kana_json}")
     print(f"Input count     : {len(raw)}")
     print(f"Output count    : {len(sanitized)}")
     print(f"Skipped invalid : {skipped_invalid}")
+    print(f"Skipped invalid kana: {skipped_invalid_kana}")
     print(f"Skipped duplicate: {skipped_duplicate}")
+    if sorted_invalid_char_counts:
+        print("Invalid kana chars:")
+        for char, count in sorted_invalid_char_counts.items():
+            print(f"- {char}: {count}")
     for field, count in sorted(per_field_counts.items()):
         print(f"- {field}: {count}")
 
