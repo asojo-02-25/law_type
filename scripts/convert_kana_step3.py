@@ -70,6 +70,7 @@ CUSTOM_READING_MAP: Dict[str, str] = {
     "荷送人": "におくりにん",
     "招状": "しょうじょう",
     "併存的債務引受": "へいぞんてきさいむひきうけ",
+    "若しくは": "もしくは",
 }
 
 CUSTOM_READING_TERMS: Tuple[str, ...] = tuple(sorted(CUSTOM_READING_MAP.keys(), key=len, reverse=True))
