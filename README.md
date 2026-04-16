@@ -78,11 +78,14 @@ pip install -r requirements.txt
   - 各要素は text, kana, field, source を保持
 - 最終整形
   - 不正レコード除外
+  - kana 文字種バリデーション（許可: ひらがな + ー + 、。）
+  - 非ひらがなを含む kana は最終データから除外し、修正対象として別出力
   - 重複除外
   - 件数・科目別件数をマニフェスト化
 - 出力
   - 最終データ: questions.json
   - 集計ログ: finalize_manifest_step4.json
+  - 修正対象レポート: finalize_invalid_kana_step4.json
 
 ---
 
