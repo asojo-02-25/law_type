@@ -87,7 +87,7 @@ python scripts/normalize_law_text_step2.py
 - 正規化済みテキストをひらがなへ変換
 - SudachiPy + SudachiDict Fullを使用
 - カスタム読み辞書(`CUSTOM_READING_MAP`)を優先適用
-- 変換後 `text`/`kana` に旧仮名候補が残っていないかを検知し、manifestに集計
+- 変換後 `text` に旧仮名候補が残っていないかを検知し、manifestに集計
 
 実行:
 

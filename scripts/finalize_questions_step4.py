@@ -187,10 +187,9 @@ def main() -> int:
         seen.add(dedupe_key)
 
         text_unknown_candidates = detect_historical_sokuon_candidates(rec["text"])
-        kana_unknown_candidates = detect_historical_sokuon_candidates(rec["kana"])
-        if text_unknown_candidates or kana_unknown_candidates:
+        if text_unknown_candidates:
             unknown_sokuon_record_count += 1
-            for candidate in text_unknown_candidates + kana_unknown_candidates:
+            for candidate in text_unknown_candidates:
                 unknown_sokuon_pattern_counts[candidate] = unknown_sokuon_pattern_counts.get(candidate, 0) + 1
 
             unknown_sokuon_records.append(
@@ -200,7 +199,6 @@ def main() -> int:
                     "text": rec["text"],
                     "kana": rec["kana"],
                     "text_unknown_patterns": sorted(set(text_unknown_candidates)),
-                    "kana_unknown_patterns": sorted(set(kana_unknown_candidates)),
                 }
             )
 

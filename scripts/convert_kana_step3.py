@@ -221,12 +221,9 @@ def main() -> int:
     custom_hits_total: Dict[str, int] = {key: 0 for key in CUSTOM_READING_MAP.keys()}
     skipped_invalid = 0
     unknown_text_by_term: Dict[str, int] = {}
-    unknown_kana_by_term: Dict[str, int] = {}
     unknown_any_record_count = 0
     unknown_text_record_count = 0
-    unknown_kana_record_count = 0
     unknown_text_total_occurrences = 0
-    unknown_kana_total_occurrences = 0
     unknown_examples: List[Dict[str, object]] = []
 
     for rec in records:
@@ -247,24 +244,15 @@ def main() -> int:
         kana = ensure_terminal_period(kana)
 
         text_unknown_candidates = detect_historical_sokuon_candidates(text)
-        kana_unknown_candidates = detect_historical_sokuon_candidates(kana)
-
-        if text_unknown_candidates or kana_unknown_candidates:
-            unknown_any_record_count += 1
 
         if text_unknown_candidates:
+            unknown_any_record_count += 1
             unknown_text_record_count += 1
             unknown_text_total_occurrences += len(text_unknown_candidates)
             for candidate in text_unknown_candidates:
                 unknown_text_by_term[candidate] = unknown_text_by_term.get(candidate, 0) + 1
 
-        if kana_unknown_candidates:
-            unknown_kana_record_count += 1
-            unknown_kana_total_occurrences += len(kana_unknown_candidates)
-            for candidate in kana_unknown_candidates:
-                unknown_kana_by_term[candidate] = unknown_kana_by_term.get(candidate, 0) + 1
-
-        if (text_unknown_candidates or kana_unknown_candidates) and len(unknown_examples) < 20:
+        if text_unknown_candidates and len(unknown_examples) < 20:
             unknown_examples.append(
                 {
                     "field": field,
@@ -272,7 +260,6 @@ def main() -> int:
                     "text": text,
                     "kana": kana,
                     "text_unknown_patterns": sorted(set(text_unknown_candidates)),
-                    "kana_unknown_patterns": sorted(set(kana_unknown_candidates)),
                 }
             )
 
@@ -293,12 +280,6 @@ def main() -> int:
     sorted_unknown_text_by_term = dict(
         sorted(
             unknown_text_by_term.items(),
-            key=lambda item: (-item[1], item[0]),
-        )
-    )
-    sorted_unknown_kana_by_term = dict(
-        sorted(
-            unknown_kana_by_term.items(),
             key=lambda item: (-item[1], item[0]),
         )
     )
@@ -333,9 +314,6 @@ def main() -> int:
             "unknown_text_record_count": unknown_text_record_count,
             "unknown_text_total_occurrences": unknown_text_total_occurrences,
             "unknown_text_by_term": sorted_unknown_text_by_term,
-            "unknown_kana_record_count": unknown_kana_record_count,
-            "unknown_kana_total_occurrences": unknown_kana_total_occurrences,
-            "unknown_kana_by_term": sorted_unknown_kana_by_term,
             "unknown_examples": unknown_examples,
         },
         "summary": summary,
@@ -350,7 +328,7 @@ def main() -> int:
     print(f"Input count     : {len(records)}")
     print(f"Output count    : {len(output_records)}")
     print(f"Skipped invalid : {skipped_invalid}")
-    print(f"Unknown sokuon records (text/kana): {unknown_text_record_count}/{unknown_kana_record_count}")
+    print(f"Unknown sokuon records (text): {unknown_text_record_count}")
     print("Custom reading hits:")
     for term, count in custom_hits_total.items():
         print(f"- {term}: {count}")
