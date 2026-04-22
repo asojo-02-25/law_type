@@ -49,6 +49,8 @@ python scripts/fetch_law_xml_step1.py
 
 - Step1で取得したXMLを解析
 - タイピング出題向けに段落文を正規化
+- 旧仮名の促音表記(例: あつた/によつて)を安全な辞書方式で現代表記へ正規化
+- 未対応の旧仮名候補を自動抽出し、manifestに集計
 - 不要データ(短すぎる/長すぎる/参照条文中心など)を除外
 
 実行:
@@ -65,11 +67,16 @@ python scripts/normalize_law_text_step2.py
 - `--min-length` (default: `50`)
 - `--max-length` (default: `130`)
 - `--reference-filter-mode` (default: `balanced`)
+- `--fail-on-unknown-sokuon` (default: `False`)
 
 出力:
 
 - `data/normalized_questions_step2.json`
 - `data/normalize_manifest_step2.json`
+
+備考:
+
+- `normalize_manifest_step2.json` の `sokuon_modernization` に、既対応置換件数と未対応候補の集計が出力される
 
 ## Step 3: かな変換
 
@@ -80,6 +87,7 @@ python scripts/normalize_law_text_step2.py
 - 正規化済みテキストをひらがなへ変換
 - SudachiPy + SudachiDict Fullを使用
 - カスタム読み辞書(`CUSTOM_READING_MAP`)を優先適用
+- 変換後 `text`/`kana` に旧仮名候補が残っていないかを検知し、manifestに集計
 
 実行:
 
@@ -92,6 +100,7 @@ python scripts/convert_kana_step3.py
 - `--input-json` (default: `data/normalized_questions_step2.json`)
 - `--output-json` (default: `data/questions_step3_kana.json`)
 - `--output-manifest` (default: `data/kana_manifest_step3.json`)
+- `--fail-on-unknown-sokuon` (default: `False`)
 
 出力:
 
@@ -107,6 +116,7 @@ python scripts/convert_kana_step3.py
 - 出題データの必須キーを検証
 - 重複排除
 - かな文字検証(許可外文字の検出)
+- 未対応の旧仮名候補を最終監査し、レポートJSONを出力
 - フロントエンド読込形式へ変換
 
 実行:
@@ -121,12 +131,25 @@ python scripts/finalize_questions_step4.py
 - `--output-json` (default: `data/questions.json`)
 - `--output-manifest` (default: `data/finalize_manifest_step4.json`)
 - `--output-invalid-kana-json` (default: `data/finalize_invalid_kana_step4.json`)
+- `--output-unknown-sokuon-json` (default: `data/finalize_unknown_sokuon_step4.json`)
+- `--fail-on-unknown-sokuon` (default: `False`)
 
 出力:
 
 - `data/questions.json`
 - `data/finalize_manifest_step4.json`
 - `data/finalize_invalid_kana_step4.json`
+- `data/finalize_unknown_sokuon_step4.json`
+
+## 厳格モード(任意)
+
+未対応の旧仮名候補を検知した時点で停止したい場合:
+
+```powershell
+python scripts/normalize_law_text_step2.py --fail-on-unknown-sokuon
+python scripts/convert_kana_step3.py --fail-on-unknown-sokuon
+python scripts/finalize_questions_step4.py --fail-on-unknown-sokuon
+```
 
 ## フロントエンドでの利用
 
