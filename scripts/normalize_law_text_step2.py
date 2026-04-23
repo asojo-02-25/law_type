@@ -33,6 +33,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+from sokuon_normalization import (
+    SOKUON_MODERNIZE_MAP,
+    apply_sokuon_modernization,
+    detect_historical_sokuon_candidates,
+)
+
 
 OPEN_TO_CLOSE = {
     "(": ")",
@@ -304,6 +310,11 @@ def parse_args() -> argparse.Namespace:
         default="balanced",
         help="Cross-reference filtering strictness",
     )
+    parser.add_argument(
+        "--fail-on-unknown-sokuon",
+        action="store_true",
+        help="Exit with code 1 if unresolved historical sokuon candidates are detected",
+    )
     return parser.parse_args()
 
 
@@ -351,6 +362,12 @@ def main() -> int:
     seen = set()
     overall = build_summary_template()
     per_field: Dict[str, Dict[str, int]] = {}
+    sokuon_hits_total: Dict[str, int] = {term: 0 for term in SOKUON_MODERNIZE_MAP.keys()}
+    sokuon_hits_count = 0
+    unknown_sokuon_by_term: Dict[str, int] = {}
+    unknown_sokuon_record_count = 0
+    unknown_sokuon_total_occurrences = 0
+    unknown_sokuon_examples: List[Dict[str, object]] = []
 
     for rec in step1_records:
         per_field.setdefault(rec.field, build_summary_template())
@@ -377,6 +394,11 @@ def main() -> int:
 
                 raw_text = extract_sentences_from_paragraph(paragraph)
                 text = normalize_text(raw_text)
+                text, sokuon_hits = apply_sokuon_modernization(text)
+
+                for term, count in sokuon_hits.items():
+                    sokuon_hits_total[term] = sokuon_hits_total.get(term, 0) + count
+                    sokuon_hits_count += count
 
                 if not text:
                     overall["filtered_empty"] += 1
@@ -426,6 +448,23 @@ def main() -> int:
                     continue
                 seen.add(dedupe_key)
 
+                unknown_candidates = detect_historical_sokuon_candidates(text)
+                if unknown_candidates:
+                    unknown_sokuon_record_count += 1
+                    unknown_sokuon_total_occurrences += len(unknown_candidates)
+                    for candidate in unknown_candidates:
+                        unknown_sokuon_by_term[candidate] = unknown_sokuon_by_term.get(candidate, 0) + 1
+
+                    if len(unknown_sokuon_examples) < 20:
+                        unknown_sokuon_examples.append(
+                            {
+                                "field": rec.field,
+                                "source": source,
+                                "text": text,
+                                "unknown_patterns": sorted(set(unknown_candidates)),
+                            }
+                        )
+
                 normalized_records.append(
                     {
                         "text": text,
@@ -439,6 +478,17 @@ def main() -> int:
 
     normalized_records.sort(key=lambda r: (r["field"], len(r["text"]), r["source"], r["text"]))
     output_json.write_text(json.dumps(normalized_records, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    nonzero_sokuon_hits = {
+        term: count for term, count in sokuon_hits_total.items()
+        if count > 0
+    }
+    sorted_unknown_sokuon_by_term = dict(
+        sorted(
+            unknown_sokuon_by_term.items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+    )
 
     manifest = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
@@ -459,10 +509,23 @@ def main() -> int:
                 "contextual": list(CONTEXTUAL_CROSS_REFERENCE_TERMS),
                 "article_reference_regex": ARTICLE_REFERENCE_RE.pattern,
             },
+            "sokuon_modernization": {
+                "enabled": True,
+                "strategy": "conservative-dictionary",
+                "map_size": len(SOKUON_MODERNIZE_MAP),
+            },
             "min_length": args.min_length,
             "max_length": args.max_length,
         },
         "summary": overall,
+        "sokuon_modernization": {
+            "known_mappings_applied_total": sokuon_hits_count,
+            "known_mappings_applied_by_term": nonzero_sokuon_hits,
+            "unknown_sokuon_record_count": unknown_sokuon_record_count,
+            "unknown_sokuon_total_occurrences": unknown_sokuon_total_occurrences,
+            "unknown_sokuon_by_term": sorted_unknown_sokuon_by_term,
+            "unknown_sokuon_examples": unknown_sokuon_examples,
+        },
         "per_field": per_field,
         "output_count": len(normalized_records),
     }
@@ -473,12 +536,22 @@ def main() -> int:
     print(f"Output json    : {output_json}")
     print(f"Output manifest: {output_manifest}")
     print(f"Kept records   : {len(normalized_records)}")
+    print(f"Sokuon mappings applied: {sokuon_hits_count}")
+    print(f"Unknown sokuon records: {unknown_sokuon_record_count}")
     for key, value in overall.items():
         print(f"- {key}: {value}")
 
     if not normalized_records:
         print("ERROR: no records after normalization", file=sys.stderr)
         return 2
+
+    if args.fail_on_unknown_sokuon and unknown_sokuon_record_count > 0:
+        print(
+            "ERROR: unresolved historical sokuon candidates detected. "
+            "Check data/normalize_manifest_step2.json.",
+            file=sys.stderr,
+        )
+        return 1
 
     return 0
 

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-17T01:55:43",
+  "generated_at": "2026-04-22T22:32:03",
   "input_json": "data/questions_step3_kana.json",
   "output_json": "data/questions.json",
   "required_keys": [
@@ -15,6 +15,14 @@
     "invalid_kana_record_count": 0,
     "invalid_char_frequency": {},
     "invalid_kana_examples": []
+  },
+  "sokuon_validation": {
+    "enabled": true,
+    "candidate_regex": "[ぁ-ゖー]{0,10}つ[たて][ぁ-ゖー]{0,10}",
+    "unknown_sokuon_output_json": "data/finalize_unknown_sokuon_step4.json",
+    "unknown_sokuon_record_count": 0,
+    "unknown_sokuon_pattern_frequency": {},
+    "unknown_sokuon_examples": []
   },
   "summary": {
     "input_count": 2731,

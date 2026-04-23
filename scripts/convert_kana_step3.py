@@ -25,6 +25,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
+from sokuon_normalization import (
+    HISTORICAL_SOKUON_CANDIDATE_RE,
+    SOKUON_MODERNIZE_MAP,
+    detect_historical_sokuon_candidates,
+)
+
 try:
     from sudachipy import Dictionary, SplitMode
 except ImportError as exc:
@@ -176,6 +182,11 @@ def parse_args() -> argparse.Namespace:
         default="data/kana_manifest_step3.json",
         help="Step 3 summary manifest JSON",
     )
+    parser.add_argument(
+        "--fail-on-unknown-sokuon",
+        action="store_true",
+        help="Exit with code 1 if unresolved historical sokuon candidates are detected",
+    )
     return parser.parse_args()
 
 
@@ -209,6 +220,11 @@ def main() -> int:
     output_records: List[Dict[str, str]] = []
     custom_hits_total: Dict[str, int] = {key: 0 for key in CUSTOM_READING_MAP.keys()}
     skipped_invalid = 0
+    unknown_text_by_term: Dict[str, int] = {}
+    unknown_any_record_count = 0
+    unknown_text_record_count = 0
+    unknown_text_total_occurrences = 0
+    unknown_examples: List[Dict[str, object]] = []
 
     for rec in records:
         if not isinstance(rec, dict):
@@ -227,6 +243,26 @@ def main() -> int:
         kana, hits = convert_to_hiragana(text, converter)
         kana = ensure_terminal_period(kana)
 
+        text_unknown_candidates = detect_historical_sokuon_candidates(text)
+
+        if text_unknown_candidates:
+            unknown_any_record_count += 1
+            unknown_text_record_count += 1
+            unknown_text_total_occurrences += len(text_unknown_candidates)
+            for candidate in text_unknown_candidates:
+                unknown_text_by_term[candidate] = unknown_text_by_term.get(candidate, 0) + 1
+
+        if text_unknown_candidates and len(unknown_examples) < 20:
+            unknown_examples.append(
+                {
+                    "field": field,
+                    "source": source,
+                    "text": text,
+                    "kana": kana,
+                    "text_unknown_patterns": sorted(set(text_unknown_candidates)),
+                }
+            )
+
         for term, count in hits.items():
             custom_hits_total[term] = custom_hits_total.get(term, 0) + count
 
@@ -240,6 +276,13 @@ def main() -> int:
         )
 
     output_json.write_text(json.dumps(output_records, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    sorted_unknown_text_by_term = dict(
+        sorted(
+            unknown_text_by_term.items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+    )
 
     summary = {
         "input_count": len(records),
@@ -260,6 +303,18 @@ def main() -> int:
             "dictionary": "sudachidict_full",
             "split_mode": SUDACHI_SPLIT_MODE_NAME,
             "custom_reading_strategy": "term-priority-segmentation",
+            "sokuon_unknown_detection": {
+                "enabled": True,
+                "candidate_regex": HISTORICAL_SOKUON_CANDIDATE_RE.pattern,
+                "known_map_size": len(SOKUON_MODERNIZE_MAP),
+            },
+        },
+        "sokuon_detection": {
+            "unknown_any_record_count": unknown_any_record_count,
+            "unknown_text_record_count": unknown_text_record_count,
+            "unknown_text_total_occurrences": unknown_text_total_occurrences,
+            "unknown_text_by_term": sorted_unknown_text_by_term,
+            "unknown_examples": unknown_examples,
         },
         "summary": summary,
     }
@@ -273,6 +328,7 @@ def main() -> int:
     print(f"Input count     : {len(records)}")
     print(f"Output count    : {len(output_records)}")
     print(f"Skipped invalid : {skipped_invalid}")
+    print(f"Unknown sokuon records (text): {unknown_text_record_count}")
     print("Custom reading hits:")
     for term, count in custom_hits_total.items():
         print(f"- {term}: {count}")
@@ -280,6 +336,14 @@ def main() -> int:
     if not output_records:
         print("ERROR: no output records", file=sys.stderr)
         return 2
+
+    if args.fail_on_unknown_sokuon and unknown_any_record_count > 0:
+        print(
+            "ERROR: unresolved historical sokuon candidates detected. "
+            "Check data/kana_manifest_step3.json.",
+            file=sys.stderr,
+        )
+        return 1
 
     return 0
 

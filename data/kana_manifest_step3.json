@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-17T01:55:35",
+  "generated_at": "2026-04-22T22:30:36",
   "input_json": "data/normalized_questions_step2.json",
   "output_json": "data/questions_step3_kana.json",
   "rules": {
@@ -46,7 +46,19 @@
     "converter": "sudachipy",
     "dictionary": "sudachidict_full",
     "split_mode": "C",
-    "custom_reading_strategy": "term-priority-segmentation"
+    "custom_reading_strategy": "term-priority-segmentation",
+    "sokuon_unknown_detection": {
+      "enabled": true,
+      "candidate_regex": "[ぁ-ゖー]{0,10}つ[たて][ぁ-ゖー]{0,10}",
+      "known_map_size": 55
+    }
+  },
+  "sokuon_detection": {
+    "unknown_any_record_count": 0,
+    "unknown_text_record_count": 0,
+    "unknown_text_total_occurrences": 0,
+    "unknown_text_by_term": {},
+    "unknown_examples": []
   },
   "summary": {
     "input_count": 2731,

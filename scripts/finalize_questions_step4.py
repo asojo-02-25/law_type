@@ -32,6 +32,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+from sokuon_normalization import (
+    HISTORICAL_SOKUON_CANDIDATE_RE,
+    detect_historical_sokuon_candidates,
+)
+
 
 REQUIRED_KEYS = ("text", "kana", "field", "source")
 ALLOWED_KANA_CHAR_PATTERN = re.compile(r"[ぁ-ゖゝゞー、。]")
@@ -69,6 +74,16 @@ def parse_args() -> argparse.Namespace:
         default="data/finalize_invalid_kana_step4.json",
         help="Invalid kana records report path",
     )
+    parser.add_argument(
+        "--output-unknown-sokuon-json",
+        default="data/finalize_unknown_sokuon_step4.json",
+        help="Unknown historical sokuon records report path",
+    )
+    parser.add_argument(
+        "--fail-on-unknown-sokuon",
+        action="store_true",
+        help="Exit with code 1 if unresolved historical sokuon candidates are detected",
+    )
     return parser.parse_args()
 
 
@@ -105,6 +120,7 @@ def main() -> int:
     output_json = (workspace / args.output_json).resolve()
     output_manifest = (workspace / args.output_manifest).resolve()
     output_invalid_kana_json = (workspace / args.output_invalid_kana_json).resolve()
+    output_unknown_sokuon_json = (workspace / args.output_unknown_sokuon_json).resolve()
 
     if not input_json.exists():
         print(f"ERROR: input file not found: {input_json}", file=sys.stderr)
@@ -113,6 +129,7 @@ def main() -> int:
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_manifest.parent.mkdir(parents=True, exist_ok=True)
     output_invalid_kana_json.parent.mkdir(parents=True, exist_ok=True)
+    output_unknown_sokuon_json.parent.mkdir(parents=True, exist_ok=True)
 
     try:
         raw = json.loads(input_json.read_text(encoding="utf-8"))
@@ -132,6 +149,9 @@ def main() -> int:
     seen: set[Tuple[str, str, str]] = set()
     invalid_kana_records: List[Dict[str, object]] = []
     invalid_char_counts: Dict[str, int] = {}
+    unknown_sokuon_records: List[Dict[str, object]] = []
+    unknown_sokuon_record_count = 0
+    unknown_sokuon_pattern_counts: Dict[str, int] = {}
 
     for item in raw:
         if not isinstance(item, dict):
@@ -166,6 +186,22 @@ def main() -> int:
             continue
         seen.add(dedupe_key)
 
+        text_unknown_candidates = detect_historical_sokuon_candidates(rec["text"])
+        if text_unknown_candidates:
+            unknown_sokuon_record_count += 1
+            for candidate in text_unknown_candidates:
+                unknown_sokuon_pattern_counts[candidate] = unknown_sokuon_pattern_counts.get(candidate, 0) + 1
+
+            unknown_sokuon_records.append(
+                {
+                    "field": rec["field"],
+                    "source": rec["source"],
+                    "text": rec["text"],
+                    "kana": rec["kana"],
+                    "text_unknown_patterns": sorted(set(text_unknown_candidates)),
+                }
+            )
+
         sanitized.append(rec)
         per_field_counts[rec["field"]] = per_field_counts.get(rec["field"], 0) + 1
 
@@ -182,9 +218,23 @@ def main() -> int:
         encoding="utf-8",
     )
 
+    unknown_sokuon_payload = {
+        "unknown_sokuon_records": unknown_sokuon_records,
+    }
+    output_unknown_sokuon_json.write_text(
+        json.dumps(unknown_sokuon_payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
     sorted_invalid_char_counts = dict(
         sorted(
             invalid_char_counts.items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+    )
+    sorted_unknown_sokuon_pattern_counts = dict(
+        sorted(
+            unknown_sokuon_pattern_counts.items(),
             key=lambda item: (-item[1], item[0]),
         )
     )
@@ -211,6 +261,14 @@ def main() -> int:
             "invalid_char_frequency": sorted_invalid_char_counts,
             "invalid_kana_examples": invalid_kana_records[:20],
         },
+        "sokuon_validation": {
+            "enabled": True,
+            "candidate_regex": HISTORICAL_SOKUON_CANDIDATE_RE.pattern,
+            "unknown_sokuon_output_json": str(output_unknown_sokuon_json.relative_to(workspace)).replace("\\", "/"),
+            "unknown_sokuon_record_count": unknown_sokuon_record_count,
+            "unknown_sokuon_pattern_frequency": sorted_unknown_sokuon_pattern_counts,
+            "unknown_sokuon_examples": unknown_sokuon_records[:20],
+        },
         "summary": summary,
     }
     output_manifest.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -220,11 +278,13 @@ def main() -> int:
     print(f"Output json     : {output_json}")
     print(f"Output manifest : {output_manifest}")
     print(f"Invalid kana report: {output_invalid_kana_json}")
+    print(f"Unknown sokuon report: {output_unknown_sokuon_json}")
     print(f"Input count     : {len(raw)}")
     print(f"Output count    : {len(sanitized)}")
     print(f"Skipped invalid : {skipped_invalid}")
     print(f"Skipped invalid kana: {skipped_invalid_kana}")
     print(f"Skipped duplicate: {skipped_duplicate}")
+    print(f"Unknown sokuon records: {unknown_sokuon_record_count}")
     if sorted_invalid_char_counts:
         print("Invalid kana chars:")
         for char, count in sorted_invalid_char_counts.items():
@@ -235,6 +295,14 @@ def main() -> int:
     if not sanitized:
         print("ERROR: no usable records in final output", file=sys.stderr)
         return 2
+
+    if args.fail_on_unknown_sokuon and unknown_sokuon_record_count > 0:
+        print(
+            "ERROR: unresolved historical sokuon candidates detected. "
+            "Check data/finalize_unknown_sokuon_step4.json.",
+            file=sys.stderr,
+        )
+        return 1
 
     return 0
 
