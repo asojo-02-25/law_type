@@ -80,6 +80,9 @@ CUSTOM_READING_MAP: Dict[str, str] = {
     "何人": "なんぴと",
     "第一項": "だいいっこう",
     "日本": "にほん",
+    "月以内": "さんげついない",
+    "月以上": "さんげついじょう",
+    "月を経過": "さんげつをけいか",
 }
 
 CUSTOM_READING_TERMS: Tuple[str, ...] = tuple(sorted(CUSTOM_READING_MAP.keys(), key=len, reverse=True))
